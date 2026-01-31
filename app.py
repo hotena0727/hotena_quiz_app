@@ -115,28 +115,38 @@ def auth_box():
                 st.stop()
 
 def restore_session_from_cookies():
+    # 이미 로그인 상태면 스킵
     if st.session_state.get("user") and st.session_state.get("access_token"):
-        return  # 이미 로그인 상태
+        return
 
     rt = cookies.get("refresh_token")
     if not rt:
         return
 
     try:
-        # ✅ refresh_token으로 새 세션 발급 (Supabase가 access_token을 다시 줌)
+        # ✅ refresh_token으로 새 세션 발급
         refreshed = sb.auth.refresh_session(rt)
+
+        # 세션이 없으면 종료
+        if not refreshed or not refreshed.session:
+            return
 
         st.session_state.user = refreshed.user
         st.session_state.access_token = refreshed.session.access_token
         st.session_state.refresh_token = refreshed.session.refresh_token
 
-        # 쿠키도 최신으로 갱신
+        # ✅ 쿠키도 최신으로 갱신
         cookies["access_token"] = refreshed.session.access_token
         cookies["refresh_token"] = refreshed.session.refresh_token
         cookies.save()
 
+    except Exception:
+        # 토큰 만료/형식 오류 등 → 조용히 무시하고 로그인 화면으로
+        return
 
-        restore_session_from_cookies()
+
+# ✅ 앱 시작 시 1회 복원 시도
+restore_session_from_cookies()
 
 
 
