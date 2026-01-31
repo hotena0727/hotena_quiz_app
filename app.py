@@ -284,43 +284,104 @@ if st.session_state.submitted:
     st.markdown("### 💬 일본어 공부, 여기서 막히셨나요?")
 
     st.markdown(
-        f"""
-        <style>
-        .floating-naver-talk {{
-            position: fixed;
-            right: 20px;
-            bottom: 90px;   /* ⭐ 핵심: footer 위로 띄움 */
-            z-index: 99999;
-            text-decoration: none;
-        }}
-        .floating-naver-talk button {{
-            background: #03C75A;
-            color: white;
-            border: none;
-            border-radius: 999px;
-            padding: 14px 18px;
-            font-size: 15px;
-            font-weight: 600;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.22);
-            cursor: pointer;
-        }}
-        .floating-naver-talk button:hover {{
-            filter: brightness(0.95);
-        }}
-        .floating-naver-talk small {{
-            display: block;
-            font-size: 12px;
-            opacity: 0.9;
-            margin-top: 2px;
-        }}
-        </style>
+    """
+    <style>
+    @keyframes floaty {
+        0%   { transform: translateY(0); }
+        50%  { transform: translateY(-6px); }
+        100% { transform: translateY(0); }
+    }
 
-        <a class="floating-naver-talk" href="{NAVER_TALK_URL}" target="_blank">
-            <button>
-                💬 네이버톡 상담
-                <small>오답 바로 질문하기</small>
+    @keyframes ping {
+        0%   { transform: scale(1); opacity: 0.9; }
+        70%  { transform: scale(2.2); opacity: 0; }
+        100% { transform: scale(2.2); opacity: 0; }
+    }
+
+    .floating-naver-talk {
+        position: fixed;
+        right: 18px;
+        bottom: 90px;   /* footer 위로 */
+        z-index: 99999;
+        text-decoration: none;
+    }
+
+    .floating-wrap {
+        position: relative;
+        animation: floaty 2.2s ease-in-out infinite;
+    }
+
+    .talk-btn {
+        background: #03C75A;
+        color: #fff;
+        border: 0;
+        border-radius: 999px;
+        padding: 14px 18px;
+        font-size: 15px;
+        font-weight: 700;
+        box-shadow: 0 12px 28px rgba(0,0,0,0.22);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        line-height: 1.1;
+    }
+
+    .talk-btn:hover { filter: brightness(0.95); }
+
+    .talk-text small {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        opacity: 0.95;
+        margin-top: 2px;
+    }
+
+    /* 🔴 빨간 알림 점 */
+    .badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        width: 12px;
+        height: 12px;
+        background: #ff3b30;
+        border-radius: 999px;
+        box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+    }
+
+    /* 🔴 빨간 점이 ‘펑펑’ 울리는 링 */
+    .badge::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 12px;
+        height: 12px;
+        transform: translate(-50%, -50%);
+        border-radius: 999px;
+        background: rgba(255,59,48,0.55);
+        animation: ping 1.2s ease-out infinite;
+    }
+
+    /* 모바일에서 너무 아래면 살짝 올리기 */
+    @media (max-width: 600px) {
+        .floating-naver-talk { bottom: 110px; right: 14px; }
+        .talk-btn { padding: 13px 16px; font-size: 14px; }
+    }
+    </style>
+
+    <a class="floating-naver-talk" href="https://talk.naver.com/XXXXXXX" target="_blank" rel="noopener noreferrer">
+        <div class="floating-wrap">
+            <span class="badge"></span>
+            <button class="talk-btn">
+                <span>💬</span>
+                <span class="talk-text">
+                    네이버톡 상담
+                    <small>오답 바로 질문하기</small>
+                </span>
             </button>
-        </a>
-        """,
-        unsafe_allow_html=True
-    )
+        </div>
+    </a>
+    """,
+    unsafe_allow_html=True
+)
