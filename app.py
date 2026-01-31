@@ -104,29 +104,38 @@ def make_question(row, pool_df):
 
 def build_quiz():
     """
-    st.session_state.pos_mode 값에 따라 출제 풀을 바꿔서 10문제를 만든다.
-    - "i_adj"  : い형용사만
-    - "na_adj" : な형용사만
-    - "mix"    : 둘 다 혼합
+    pos_mode에 따라 10문제를 만든다.
+    - i_adj  : い형용사 10개
+    - na_adj : な형용사 10개
+    - mix    : い 5개 + な 5개 (5:5 고정)
     """
     mode = st.session_state.get("pos_mode", "mix")
 
-    # 1) 출제용 pool 만들기
+    # ✅ 1) 혼합(5:5)인 경우: 여기서 바로 sampled를 만든 뒤 return으로 끝낸다
     if mode == "mix":
-        filtered = pool[pool["pos"].isin(["i_adj", "na_adj"])].copy()
-    else:
-        filtered = pool[pool["pos"] == mode].copy()
+        i_pool = pool[pool["pos"] == "i_adj"].copy()
+        na_pool = pool[pool["pos"] == "na_adj"].copy()
 
-    # 2) 단어 수 부족하면 중단
+        if len(i_pool) < 5 or len(na_pool) < 5:
+            st.error(f"혼합 모드 단어 부족: i={len(i_pool)}, na={len(na_pool)}")
+            st.stop()
+
+        sampled = pd.concat([
+            i_pool.sample(n=5),
+            na_pool.sample(n=5)
+        ]).sample(frac=1).reset_index(drop=True)
+
+        quiz = [make_question(sampled.iloc[i], sampled) for i in range(N)]
+        return quiz
+
+    # ✅ 2) 혼합이 아니라면: 해당 pos에서만 10개 뽑는다
+    filtered = pool[pool["pos"] == mode].copy()
+
     if len(filtered) < N:
         st.error(f"단어가 부족합니다: mode={mode}, pool={len(filtered)}")
         st.stop()
 
-    # 3) 랜덤 10개 뽑아서 문제 생성
     sampled = filtered.sample(n=N).reset_index(drop=True)
-
-    # 4) 보기(오답)도 같은 품사에서만 뽑히게 하려면,
-    #    make_question에 넘기는 pool_df도 filtered로 주는 게 가장 안정적.
     quiz = [make_question(sampled.iloc[i], filtered) for i in range(N)]
     return quiz
 
