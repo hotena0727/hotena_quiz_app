@@ -84,6 +84,19 @@ user_id = st.session_state.user.id
 st.set_page_config(page_title="JLPT Quiz", layout="centered")
 st.title("하테나일본어 형용사 퀴즈")
 
+if "user" in st.session_state and st.session_state.user is not None:
+    colA, colB = st.columns([7, 3])
+    with colA:
+        st.caption(f"로그인: {st.session_state.user.email}")
+    with colB:
+        if st.button("🚪 로그아웃", use_container_width=True):
+            try:
+                sb.auth.sign_out()
+            except Exception:
+                pass
+            st.session_state.user = None
+            st.rerun()
+
 NAVER_TALK_URL = "https://talk.naver.com/W45141"
 LEVEL = "N4"
 N = 10
