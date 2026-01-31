@@ -3,6 +3,15 @@ import random
 import pandas as pd
 import streamlit as st
 from supabase import create_client
+from streamlit_cookies_manager import EncryptedCookieManager
+
+cookies = EncryptedCookieManager(
+    prefix="hatena_jlpt/",
+    password=st.secrets.get("COOKIE_PASSWORD", "change-me-please")  # secrets에 넣는 걸 추천
+)
+if not cookies.ready():
+    st.stop()
+
 
 # ============================================================
 # ✅ Streamlit 기본 설정 (반드시 가장 위, 첫 st.* 호출)
@@ -54,35 +63,41 @@ def auth_box():
     tab1, tab2 = st.tabs(["로그인", "회원가입"])
 
     with tab1:
-        email = st.text_input("이메일", key="login_email")
-        pw = st.text_input("비밀번호", type="password", key="login_pw")
+    email = st.text_input("이메일", key="login_email")
+    pw = st.text_input("비밀번호", type="password", key="login_pw")
 
-        if st.button("로그인", use_container_width=True):
-            if not email or not pw:
-                st.warning("이메일과 비밀번호를 입력해주세요.")
-                st.stop()
+    if st.button("로그인", use_container_width=True):
+        if not email or not pw:
+            st.warning("이메일과 비밀번호를 입력해주세요.")
+            st.stop()
 
-            try:
-                res = sb.auth.sign_in_with_password({"email": email, "password": pw})
+        try:
+            res = sb.auth.sign_in_with_password({"email": email, "password": pw})
 
-                # ✅ user 저장
-                st.session_state.user = res.user
+            # ✅ user
+            st.session_state.user = res.user
 
-                # ✅ access_token 저장 (RLS용)
-                if res.session and res.session.access_token:
-                    st.session_state.access_token = res.session.access_token
-                    st.session_state.refresh_token = res.session.refresh_token
-                else:
-                    st.warning("로그인은 되었지만 세션 토큰이 없습니다. 이메일 인증 상태를 확인해주세요.")
-                    st.session_state.access_token = None
-                    st.session_state.refresh_token = None
+            # ✅ session token (RLS용)
+            if res.session and res.session.access_token:
+                st.session_state.access_token = res.session.access_token
+                st.session_state.refresh_token = res.session.refresh_token
 
-                st.success("로그인 완료!")
-                st.rerun()
+                # ✅✅✅ 여기! 로그인 성공 후 쿠키 저장(새로고침 대비)
+                cookies["access_token"] = res.session.access_token
+                cookies["refresh_token"] = res.session.refresh_token
+                cookies.save()
 
-            except Exception:
-                st.error("로그인 실패: 이메일/비밀번호 또는 이메일 인증 상태를 확인해주세요.")
-                st.stop()
+            else:
+                st.warning("로그인은 되었지만 세션 토큰이 없습니다. 이메일 인증 상태를 확인해주세요.")
+                st.session_state.access_token = None
+                st.session_state.refresh_token = None
+
+            st.success("로그인 완료!")
+            st.rerun()
+
+        except Exception:
+            st.error("로그인 실패: 이메일/비밀번호 또는 이메일 인증 상태를 확인해주세요.")
+            st.stop()
 
     with tab2:
         email = st.text_input("이메일", key="signup_email")
@@ -99,6 +114,31 @@ def auth_box():
             except Exception:
                 st.error("회원가입 실패: 이메일 형식/비밀번호 조건을 확인해주세요.")
                 st.stop()
+
+def restore_session_from_cookies():
+    if st.session_state.get("user") and st.session_state.get("access_token"):
+        return  # 이미 로그인 상태
+
+    rt = cookies.get("refresh_token")
+    if not rt:
+        return
+
+    try:
+        # ✅ refresh_token으로 새 세션 발급 (Supabase가 access_token을 다시 줌)
+        refreshed = sb.auth.refresh_session(rt)
+
+        st.session_state.user = refreshed.user
+        st.session_state.access_token = refreshed.session.access_token
+        st.session_state.refresh_token = refreshed.session.refresh_token
+
+        # 쿠키도 최신으로 갱신
+        cookies["access_token"] = refreshed.session.access_token
+        cookies["refresh_token"] = refreshed.session.refresh_token
+        cookies.save()
+
+
+restore_session_from_cookies()
+
 
 
 def require_login():
