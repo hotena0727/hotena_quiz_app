@@ -534,19 +534,100 @@ if st.session_state.submitted:
                 st.warning("DB 저장에 실패했습니다. 아래 에러를 확인해주세요.")
                 st.code(str(e))
 
-        st.subheader("📌 내 최근 기록")
-        try:
-            res = fetch_recent_attempts(sb_authed, user_id, limit=10)
-            if res.data:
-                df_hist = pd.DataFrame(res.data)
-                df_hist["pos_mode"] = df_hist["pos_mode"].replace({
-                    "i_adj": "い형용사", "na_adj": "な형용사", "mix": "혼합"
-                })
-                st.dataframe(df_hist, use_container_width=True)
+        # ✅ (예쁘게) 내 기록 보기
+st.subheader("📌 내 최근 기록")
+
+def fmt_mode(m: str) -> str:
+    return {"i_adj": "い형용사", "na_adj": "な형용사", "mix": "혼합"}.get(m, m)
+
+def fmt_dt(s: str) -> str:
+    # created_at 예: "2026-01-31T12:34:56+00:00"
+    if not s:
+        return ""
+    return s.replace("T", " ")[:16]  # "2026-01-31 12:34"
+
+try:
+    res = fetch_recent_attempts(sb_authed, user_id, limit=10)
+    rows = res.data or []
+
+    if not rows:
+        st.info("아직 저장된 기록이 없습니다. 문제를 풀고 제출하면 기록이 쌓여요.")
+    else:
+        # --- 상단 요약(최근 10회) ---
+        df_hist = pd.DataFrame(rows)
+
+        # 안전 처리
+        if "score" in df_hist.columns and "quiz_len" in df_hist.columns:
+            df_hist["acc"] = (df_hist["score"] / df_hist["quiz_len"]) * 100
+        else:
+            df_hist["acc"] = 0
+
+        avg_acc = df_hist["acc"].mean() if len(df_hist) else 0
+        best = df_hist["score"].max() if "score" in df_hist.columns else 0
+        latest = rows[0]
+
+        c1, c2, c3 = st.columns(3)
+        c1.metric("최근 10회 평균", f"{avg_acc:.0f}%")
+        c2.metric("최고 점수", f"{best} / {int(df_hist['quiz_len'].max()) if 'quiz_len' in df_hist.columns else 10}")
+        c3.metric("최근 점수", f"{latest.get('score', 0)} / {latest.get('quiz_len', 10)}")
+
+        st.divider()
+
+        # --- 카드형 리스트 ---
+        for r in rows:
+            score = int(r.get("score", 0))
+            qlen = int(r.get("quiz_len", 10))
+            acc = int(round((score / qlen) * 100)) if qlen else 0
+            wrong = int(r.get("wrong_count", 0))
+            mode = fmt_mode(r.get("pos_mode", ""))
+            dt = fmt_dt(r.get("created_at", ""))
+
+            # 등급 뱃지
+            if acc == 100:
+                badge = "🏆 완벽"
+            elif acc >= 80:
+                badge = "🔥 우수"
+            elif acc >= 60:
+                badge = "👍 양호"
             else:
-                st.info("아직 저장된 기록이 없습니다. 문제를 풀고 제출하면 기록이 쌓여요.")
-        except Exception as e:
-            st.info("기록을 불러오지 못했습니다. 아래 에러를 확인해주세요.")
-            st.code(str(e))
+                badge = "💪 성장"
+
+            st.markdown(
+                f"""
+<div style="border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:14px 14px; margin-bottom:10px;">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div style="font-size:15px; font-weight:700;">{badge} · {mode}</div>
+    <div style="font-size:12px; opacity:0.7;">{dt}</div>
+  </div>
+
+  <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+    <div style="padding:8px 10px; border-radius:12px; background:rgba(255,255,255,0.06);">
+      점수 <b>{score}/{qlen}</b> · 정답률 <b>{acc}%</b>
+    </div>
+    <div style="padding:8px 10px; border-radius:12px; background:rgba(255,255,255,0.06);">
+      오답 <b>{wrong}</b>개
+    </div>
+    <div style="padding:8px 10px; border-radius:12px; background:rgba(255,255,255,0.06);">
+      레벨 <b>{r.get("level","")}</b>
+    </div>
+  </div>
+</div>
+""",
+                unsafe_allow_html=True,
+            )
+
+        # --- (선택) 간단한 추세 그래프 ---
+        # 최근 것이 위에 있으니 반대로 뒤집어 그래프 표시
+        df_plot = df_hist.copy()
+        df_plot = df_plot.iloc[::-1].reset_index(drop=True)
+        if "created_at" in df_plot.columns:
+            df_plot["created_at"] = df_plot["created_at"].astype(str).str.replace("T", " ").str[:16]
+
+        st.caption("최근 기록 추세")
+        st.line_chart(df_plot.set_index("created_at")[["acc"]])
+
+except Exception as e:
+    st.warning("기록을 불러오지 못했습니다. 아래 에러를 확인해주세요.")
+    st.write(getattr(e, "args", e))
 
     render_naver_talk()
