@@ -516,6 +516,14 @@ if st.session_state.submitted:
     quiz_len = len(st.session_state.quiz)
 
     st.success(f"점수: {score} / {quiz_len}")
+    # ✅✅✅ (여기!) DB 저장/조회 직전에 상태 확인
+    sb_authed = get_authed_sb()
+    st.write("token exists:", bool(st.session_state.get("access_token")))
+    st.write("user_id:", user_id)
+    st.write("sb_authed:", sb_authed is not None)
+    
+    
+    
     ratio = score / quiz_len if quiz_len else 0
 
     if ratio == 1:
