@@ -16,6 +16,17 @@ st.caption(f"CSV 존재: {CSV_PATH.exists()}")
 # ✅ CSV 불러오기
 df = pd.read_csv(CSV_PATH)
 
+# 🔽🔽🔽 바로 여기 추가 🔽🔽🔽
+df.columns = (
+    df.columns
+    .astype(str)
+    .str.replace("\ufeff", "", regex=False)
+    .str.strip()
+)
+
+st.write("컬럼들:", list(df.columns))
+st.dataframe(df.head(3))
+
 # ✅ STEP1 없이: 기본값을 코드에 고정
 LEVEL = "N4"
 POS = "i_adj"
