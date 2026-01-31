@@ -49,6 +49,32 @@ def require_login():
         auth_box()
         st.stop()
 
+# 로그인 강제
+require_login()
+user = st.session_state.user
+user_id = user.id
+
+# ✅ 로그아웃 버튼 (사이드바)
+with st.sidebar:
+    st.markdown("### 👤 로그인 정보")
+    st.write(user.email if hasattr(user, "email") else "로그인됨")
+
+    if st.button("🚪 로그아웃", use_container_width=True):
+        try:
+            sb.auth.sign_out()  # 서버 세션 정리(가능한 경우)
+        except Exception:
+            pass
+
+        st.session_state.user = None
+        # 퀴즈 관련 상태도 같이 초기화하고 싶으면 아래도 추가
+        st.session_state.submitted = False
+        st.session_state.answers = []
+        st.session_state.quiz = build_quiz()
+        st.session_state.quiz_version += 1
+
+        st.rerun()
+
+
 require_login()
 user_id = st.session_state.user.id
 
