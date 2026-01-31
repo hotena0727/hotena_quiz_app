@@ -284,7 +284,7 @@ if st.session_state.submitted:
 
     st.markdown(
         """
-        <a href="https://talk.naver.com/XXXXXXX" target="_blank">
+        <a href="https://talk.naver.com/talk.naver.com/W45141" target="_blank">
             <button style="
                 background-color:#03C75A;
                 color:white;
