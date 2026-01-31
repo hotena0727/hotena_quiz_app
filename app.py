@@ -8,6 +8,36 @@ SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_ANON_KEY = st.secrets["SUPABASE_ANON_KEY"]
 sb = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
+def auth_box():
+    st.subheader("로그인")
+
+    tab1, tab2 = st.tabs(["로그인", "회원가입"])
+
+    with tab1:
+        email = st.text_input("이메일", key="login_email")
+        pw = st.text_input("비밀번호", type="password", key="login_pw")
+        if st.button("로그인", use_container_width=True):
+            res = sb.auth.sign_in_with_password({"email": email, "password": pw})
+            st.session_state.user = res.user
+            st.success("로그인 완료!")
+            st.rerun()
+
+    with tab2:
+        email = st.text_input("이메일", key="signup_email")
+        pw = st.text_input("비밀번호", type="password", key="signup_pw")
+        if st.button("회원가입", use_container_width=True):
+            sb.auth.sign_up({"email": email, "password": pw})
+            st.success("회원가입 요청 완료! 이메일 인증이 필요할 수 있어요.")
+            # Supabase 설정에 따라 이메일 인증 on/off
+
+def require_login():
+    if "user" not in st.session_state or st.session_state.user is None:
+        auth_box()
+        st.stop()
+
+require_login()
+user_id = st.session_state.user.id
+
 # =====================
 # 기본 설정
 # =====================
