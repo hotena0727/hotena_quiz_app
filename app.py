@@ -275,4 +275,4 @@ if st.session_state.submitted:
 """
         )
     else:
-        st.write("오답이 없습니다!")
+        pass
