@@ -172,6 +172,17 @@ if st.session_state.submitted:
             })
 
     st.success(f"점수: {score} / {N}")
+    
+    ratio = score / N
+
+    if ratio == 1:
+        st.balloons()
+        st.success("🎉 완벽해요! 전부 정답입니다. 정말 잘했어요!")
+    elif ratio >= 0.7:
+        st.info("👍 잘하고 있어요! 조금만 더 다듬으면 완벽해질 거예요.")
+    else:
+        st.warning("💪 괜찮아요! 틀린 문제는 성장의 재료예요. 다시 한 번 도전해봐요.")
+
 
     if wrong_list:
         st.subheader("❌ 오답 노트")
@@ -194,5 +205,4 @@ if st.session_state.submitted:
 """
         )
     else:
-        st.balloons()
-        st.write("전부 정답! 완벽합니다.")
+        pass
