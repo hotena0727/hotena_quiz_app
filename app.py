@@ -281,8 +281,6 @@ if st.session_state.submitted:
     else:
         pass
     st.divider()
-    st.markdown("### 💬 일본어 공부, 여기서 막히셨나요?")
-
     st.markdown(
     """
     <style>
