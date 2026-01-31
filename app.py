@@ -2,6 +2,23 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+BASE_DIR = Path(__file__).resolve().parent
+CSV_PATH = BASE_DIR / "data" / "words_adj_300.csv"
+
+st.caption(f"CSV 경로: {CSV_PATH}")
+st.caption(f"CSV 존재: {CSV_PATH.exists()}")
+
+# 1) 먼저 콤마로 읽어봄
+df = pd.read_csv(CSV_PATH)
+
+# 2) 컬럼이 1개이고, 헤더에 탭이 있으면 -> 탭 파일로 판단하고 다시 읽기
+if len(df.columns) == 1 and "\t" in df.columns[0]:
+    df = pd.read_csv(CSV_PATH, sep="\t")
+
+# (확인용) 컬럼 체크
+st.write("컬럼들:", list(df.columns))
+st.dataframe(df.head(3))
+
 st.set_page_config(page_title="JLPT Adjective Quiz", layout="centered")
 st.title("JLPT い形容詞クイズ (N4) - 10問")
 
