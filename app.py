@@ -142,34 +142,28 @@ if "quiz" not in st.session_state:
     st.session_state.submitted = False
     st.session_state.answers = [None] * N
 
-st.caption("출제 유형을 선택하세요")
+mode_label_map = {
+    "i_adj": "い形容詞",
+    "na_adj": "な形容詞",
+    "mix": "혼합",
+}
 
-b1, b2, b3 = st.columns(3)
+selected = st.radio(
+    "출제 유형",
+    options=["i_adj", "na_adj", "mix"],
+    format_func=lambda x: mode_label_map[x],
+    horizontal=True,
+    index=["i_adj", "na_adj", "mix"].index(st.session_state.pos_mode),
+)
 
-with b1:
-    if st.button("い형용사"):
-        st.session_state.pos_mode = "i_adj"
-        st.session_state.quiz = build_quiz()
-        st.session_state.answers = [None] * N
-        st.session_state.submitted = False
-        st.session_state.quiz_version += 1
+if selected != st.session_state.pos_mode:
+    st.session_state.pos_mode = selected
+    st.session_state.quiz = build_quiz()
+    st.session_state.answers = [None] * N
+    st.session_state.submitted = False
+    st.session_state.quiz_version += 1
 
-with b2:
-    if st.button("な형용사"):
-        st.session_state.pos_mode = "na_adj"
-        st.session_state.quiz = build_quiz()
-        st.session_state.answers = [None] * N
-        st.session_state.submitted = False
-        st.session_state.quiz_version += 1
-
-with b3:
-    if st.button("혼합"):
-        st.session_state.pos_mode = "mix"
-        st.session_state.quiz = build_quiz()
-        st.session_state.answers = [None] * N
-        st.session_state.submitted = False
-        st.session_state.quiz_version += 1
-
+st.caption(f"현재 선택: **{mode_label_map[st.session_state.pos_mode]}**")
 st.divider()
 
 col1, col2 = st.columns(2)
