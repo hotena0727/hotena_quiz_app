@@ -252,6 +252,13 @@ def render_naver_talk():
 # =====================
 # 세션 초기화
 # =====================
+if "history" not in st.session_state:
+    st.session_state.history = []   # 매 회차 기록(점수, 문항수 등)
+if "wrong_counter" not in st.session_state:
+    st.session_state.wrong_counter = {}  # 틀린 단어 누적 카운트
+if "total_counter" not in st.session_state:
+    st.session_state.total_counter = {}  # 나온 단어(출제) 누적 카운트
+
 if "pos_mode" not in st.session_state:
     st.session_state.pos_mode = "mix"
 if "quiz_version" not in st.session_state:
@@ -365,7 +372,22 @@ if st.session_state.submitted:
 
     st.success(f"점수: {score} / {quiz_len}")
     ratio = score / quiz_len if quiz_len else 0
+    # --- 누적 기록 저장(세션) ---
+    st.session_state.history.append({
+        "mode": st.session_state.pos_mode,
+        "score": score,
+        "total": quiz_len,
+    })
 
+    # --- 출제/오답 카운트 누적 ---
+    for idx, q in enumerate(st.session_state.quiz):
+        word = q["jp_word"]
+        st.session_state.total_counter[word] = st.session_state.total_counter.get(word, 0) + 1
+
+        picked = st.session_state.answers[idx]
+        if picked != q["correct_text"]:
+            st.session_state.wrong_counter[word] = st.session_state.wrong_counter.get(word, 0) + 1
+    
     if ratio == 1:
         st.balloons()
         st.success("🎉 완벽해요! 전부 정답입니다. 정말 잘했어요!")
@@ -401,6 +423,33 @@ if st.session_state.submitted:
 ---
 """
             )
+st.divider()
+st.subheader("📊 누적 학습 현황 (이번 세션)")
+
+# 누적 점수/문항
+total_attempts = sum(x["total"] for x in st.session_state.history) if st.session_state.history else 0
+total_score = sum(x["score"] for x in st.session_state.history) if st.session_state.history else 0
+acc = (total_score / total_attempts) if total_attempts else 0
+
+c1, c2, c3 = st.columns(3)
+c1.metric("누적 회차", len(st.session_state.history))
+c2.metric("누적 점수", f"{total_score} / {total_attempts}")
+c3.metric("누적 정답률", f"{acc*100:.0f}%")
+
+# 자주 틀리는 단어 TOP5
+if st.session_state.wrong_counter:
+    st.markdown("#### ❌ 자주 틀리는 단어 TOP 5")
+    top5 = sorted(st.session_state.wrong_counter.items(), key=lambda x: x[1], reverse=True)[:5]
+    for rank, (w, cnt) in enumerate(top5, start=1):
+        total_seen = st.session_state.total_counter.get(w, 0)
+        st.write(f"{rank}. **{w}**  —  {cnt}회 오답 / {total_seen}회 출제")
+else:
+    st.info("아직 오답 누적 데이터가 없습니다.")
+if st.button("🗑️ 누적 기록 초기화", use_container_width=True):
+    st.session_state.history = []
+    st.session_state.wrong_counter = {}
+    st.session_state.total_counter = {}
+    st.rerun()
 
     # ✅ 제출 후에만 상담 배너 노출
     render_naver_talk()
