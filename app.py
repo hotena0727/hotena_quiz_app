@@ -63,41 +63,40 @@ def auth_box():
     tab1, tab2 = st.tabs(["로그인", "회원가입"])
 
     with tab1:
-    email = st.text_input("이메일", key="login_email")
-    pw = st.text_input("비밀번호", type="password", key="login_pw")
+        email = st.text_input("이메일", key="login_email")
+        pw = st.text_input("비밀번호", type="password", key="login_pw")
 
-    if st.button("로그인", use_container_width=True):
-        if not email or not pw:
-            st.warning("이메일과 비밀번호를 입력해주세요.")
-            st.stop()
+        if st.button("로그인", use_container_width=True):
+            if not email or not pw:
+                st.warning("이메일과 비밀번호를 입력해주세요.")
+                st.stop()
 
-        try:
-            res = sb.auth.sign_in_with_password({"email": email, "password": pw})
+            try:
+                res = sb.auth.sign_in_with_password({"email": email, "password": pw})
 
-            # ✅ user
-            st.session_state.user = res.user
+                # ✅ user
+                st.session_state.user = res.user
 
-            # ✅ session token (RLS용)
-            if res.session and res.session.access_token:
-                st.session_state.access_token = res.session.access_token
-                st.session_state.refresh_token = res.session.refresh_token
+                # ✅ session token (RLS용)
+                if res.session and res.session.access_token:
+                    st.session_state.access_token = res.session.access_token
+                    st.session_state.refresh_token = res.session.refresh_token
 
-                # ✅✅✅ 여기! 로그인 성공 후 쿠키 저장(새로고침 대비)
-                cookies["access_token"] = res.session.access_token
-                cookies["refresh_token"] = res.session.refresh_token
-                cookies.save()
+                    # ✅✅✅ 쿠키 저장(새로고침 대비)
+                    cookies["access_token"] = res.session.access_token
+                    cookies["refresh_token"] = res.session.refresh_token
+                    cookies.save()
+                else:
+                    st.warning("로그인은 되었지만 세션 토큰이 없습니다. 이메일 인증 상태를 확인해주세요.")
+                    st.session_state.access_token = None
+                    st.session_state.refresh_token = None
 
-            else:
-                st.warning("로그인은 되었지만 세션 토큰이 없습니다. 이메일 인증 상태를 확인해주세요.")
-                st.session_state.access_token = None
-                st.session_state.refresh_token = None
+                st.success("로그인 완료!")
+                st.rerun()
 
-            st.success("로그인 완료!")
-            st.rerun()
-
-        except Exception:
-            st.error("로그인 실패: 이메일/비밀번호 또는 이메일 인증 상태를 확인해주세요.")
-            st.stop()
+            except Exception:
+                st.error("로그인 실패: 이메일/비밀번호 또는 이메일 인증 상태를 확인해주세요.")
+                st.stop()
 
     with tab2:
         email = st.text_input("이메일", key="signup_email")
