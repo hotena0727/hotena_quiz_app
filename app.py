@@ -445,11 +445,18 @@ if st.session_state.submitted:
     }
     </style>
 
-    st.markdown(
-    f"""
-    ...
-    <a class="floating-naver-talk" href="{NAVER_TALK_URL}" target="_blank" rel="noopener noreferrer">
-    ...
+    <a class="floating-naver-talk" href="https://talk.naver.com/W45141" target="_blank" rel="noopener noreferrer">
+        <div class="floating-wrap">
+            <span class="badge"></span>
+            <button class="talk-btn" type="button">
+                <span>💬</span>
+                <span class="talk-text">
+                    1:1 하테나쌤 상담
+                    <small>수강신청 문의하기</small>
+                </span>
+            </button>
+        </div>
+    </a>
     """,
     unsafe_allow_html=True
 )
