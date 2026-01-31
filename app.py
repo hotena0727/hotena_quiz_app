@@ -308,102 +308,102 @@ if st.session_state.submitted:
         st.subheader("❌ 오답 노트")
 
         # ✅ 버튼 대신 "배너"에 애니메이션을 준다 (Streamlit CSS 안 먹는 문제 회피)
-    st.markdown(
-        """
-        <style>
-        @keyframes pulseRing {
-            0%   { transform: scale(1); opacity: 0.9; }
-            70%  { transform: scale(2.3); opacity: 0; }
-            100% { transform: scale(2.3); opacity: 0; }
-        }
-        @keyframes floaty {
-            0%   { transform: translateY(0); }
-            50%  { transform: translateY(-4px); }
-            100% { transform: translateY(0); }
-        }
-
-        .retry-banner{
-            border: 2px solid rgba(255,75,75,0.35);
-            background: rgba(255,75,75,0.08);
-            border-radius: 14px;
-            padding: 14px 14px;
-            margin: 10px 0 8px 0;
-            animation: floaty 2.2s ease-in-out infinite;
-        }
-
-        .retry-row{
-            display:flex;
-            align-items:center;
-            gap:10px;
-            font-weight:800;
-            font-size:16px;
-        }
-
-        .retry-dot{
-            width:10px; height:10px;
-            background:#ff3b30;
-            border-radius:999px;
-            position:relative;
-            flex:0 0 auto;
-        }
-        .retry-dot::after{
-            content:"";
-            position:absolute;
-            left:50%; top:50%;
-            width:10px; height:10px;
-            transform: translate(-50%,-50%);
-            border-radius:999px;
-            background: rgba(255,59,48,0.55);
-            animation: pulseRing 1.2s ease-out infinite;
-        }
-
-        .retry-sub{
-            margin-top:4px;
-            font-size:13px;
-            opacity:0.85;
-        }
-        </style>
-
-        <div class="retry-banner">
-          <div class="retry-row">
-            <span class="retry-dot"></span>
-            <span>틀린 문제만 다시 풀면 점수 확 올라가요!</span>
-          </div>
-          <div class="retry-sub">오답만 모아서 2회전 들어갑니다 👇</div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    # ✅ 버튼은 Streamlit 공식 옵션으로 확실히 튀게
-    if st.button("❌ 틀린 문제만 다시 풀기", type="primary", key="retry_wrong"):
-        base_pool = get_base_pool_for_mode()
-        st.session_state.quiz = build_quiz_from_wrongs(wrong_list, base_pool)
-
-        # 다시 풀기 모드로 초기화
-        st.session_state.submitted = False
-        st.session_state.quiz_version += 1
-        st.rerun()
-
-# ✅ 오답 내용 출력(오답 있을 때만)
-if wrong_list:
-    for w in wrong_list:
         st.markdown(
-            f"""
-**Q{w['No']}**
+            """
+            <style>
+            @keyframes pulseRing {
+                0%   { transform: scale(1); opacity: 0.9; }
+                70%  { transform: scale(2.3); opacity: 0; }
+                100% { transform: scale(2.3); opacity: 0; }
+            }
+            @keyframes floaty {
+                0%   { transform: translateY(0); }
+                50%  { transform: translateY(-4px); }
+                100% { transform: translateY(0); }
+            }
 
-- 문제: {w['문제']}
-- ❌ 내 답: **{w['내 답']}**
-- ✅ 정답: **{w['정답']}**
+            .retry-banner{
+                border: 2px solid rgba(255,75,75,0.35);
+                background: rgba(255,75,75,0.08);
+                border-radius: 14px;
+                padding: 14px 14px;
+                margin: 10px 0 8px 0;
+                animation: floaty 2.2s ease-in-out infinite;
+            }
 
-📌 단어 정리  
-- 표기: **{w['단어']}**  
-- 읽기: {w['읽기']}  
-- 뜻: {w['뜻']}
+            .retry-row{
+                display:flex;
+                align-items:center;
+                gap:10px;
+                font-weight:800;
+                font-size:16px;
+            }
 
----
-"""
+            .retry-dot{
+                width:10px; height:10px;
+                background:#ff3b30;
+                border-radius:999px;
+                position:relative;
+                flex:0 0 auto;
+            }
+            .retry-dot::after{
+                content:"";
+                position:absolute;
+                left:50%; top:50%;
+                width:10px; height:10px;
+                transform: translate(-50%,-50%);
+                border-radius:999px;
+                background: rgba(255,59,48,0.55);
+                animation: pulseRing 1.2s ease-out infinite;
+            }
+
+            .retry-sub{
+                margin-top:4px;
+                font-size:13px;
+                opacity:0.85;
+            }
+            </style>
+
+            <div class="retry-banner">
+              <div class="retry-row">
+                <span class="retry-dot"></span>
+                <span>틀린 문제만 다시 풀면 점수 확 올라가요!</span>
+              </div>
+              <div class="retry-sub">오답만 모아서 2회전 들어갑니다 👇</div>
+            </div>
+            """,
+            unsafe_allow_html=True
         )
+
+        # ✅ 버튼은 Streamlit 공식 옵션으로 확실히 튀게
+        if st.button("❌ 틀린 문제만 다시 풀기", type="primary", key="retry_wrong"):
+            base_pool = get_base_pool_for_mode()
+            st.session_state.quiz = build_quiz_from_wrongs(wrong_list, base_pool)
+
+            # 다시 풀기 모드로 초기화
+            st.session_state.submitted = False
+            st.session_state.quiz_version += 1
+            st.rerun()
+
+    # ✅ 오답 내용 출력(오답 있을 때만)
+    if wrong_list:
+        for w in wrong_list:
+            st.markdown(
+                f"""
+    **Q{w['No']}**
+
+    - 문제: {w['문제']}
+    - ❌ 내 답: **{w['내 답']}**
+    - ✅ 정답: **{w['정답']}**
+
+    📌 단어 정리  
+    - 표기: **{w['단어']}**  
+    - 읽기: {w['읽기']}  
+    - 뜻: {w['뜻']}
+
+    ---
+    """
+            )
     else:
         pass
     st.divider()
