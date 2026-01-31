@@ -175,7 +175,7 @@ if st.session_state.submitted:
     st.success(f"점수: {score} / {N}")
 
     if wrong_list:
-    st.subheader("❌ 오답 노트")
+        st.subheader("❌ 오답 노트")
 
     for w in wrong_list:
         st.markdown(
@@ -195,5 +195,5 @@ if st.session_state.submitted:
 """
         )
     else:
-    st.balloons()
-    st.write("전부 정답! 완벽합니다.")
+        st.balloons()
+        st.write("전부 정답! 완벽합니다.")
