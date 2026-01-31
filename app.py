@@ -29,6 +29,7 @@ df.columns = df.columns.astype(str).str.replace("\ufeff", "", regex=False).str.s
 # 설정 (STEP1 생략: 고정값)
 # =====================
 LEVEL = "N4"
+POS_LIST = ["i_adj", "na_adj"]
 N = 10
 
 pool = df[(df["level"] == LEVEL) & (df["pos"] == POS)].copy()
