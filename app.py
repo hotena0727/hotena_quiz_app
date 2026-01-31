@@ -178,7 +178,6 @@ if st.session_state.submitted:
 
     if wrong_list:
         st.subheader("❌ 오답 노트")
-st.subheader("❌ 오답 노트")
 
 for w in wrong_list:
     st.markdown(f"""
