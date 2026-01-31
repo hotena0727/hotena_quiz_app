@@ -296,6 +296,23 @@ if st.session_state.submitted:
     st.session_state.wrong_list = wrong_list
     
     st.success(f"점수: {score} / {quiz_len}")
+
+
+    # ✅ 오답이 있을 때만: "틀린 문제만 다시 풀기" 버튼 보여주기
+ if st.session_state.wrong_list:
+    if st.button("❌ 틀린 문제만 다시 풀기", type="primary", use_container_width=True):
+        # 현재 모드에 맞는 base_pool 만들기
+        base_pool = get_base_pool_for_mode()
+
+        # 오답 문제만으로 퀴즈 재구성
+        st.session_state.quiz = build_quiz_from_wrongs(st.session_state.wrong_list, base_pool)
+
+        # 다시 풀기 모드로 초기화
+        st.session_state.submitted = False
+        st.session_state.quiz_version += 1
+        st.rerun()
+
+     
     ratio = score / quiz_len if quiz_len else 0
 
     if ratio == 1:
