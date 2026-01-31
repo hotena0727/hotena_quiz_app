@@ -325,6 +325,7 @@ if st.session_state.submitted:
         align-items: center;
         gap: 10px;
         line-height: 1.1;
+        text-decoration: none !important; /*
     }
 
     .talk-btn:hover { filter: brightness(0.95); }
