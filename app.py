@@ -5,10 +5,9 @@ import streamlit as st
 from supabase import create_client
 
 # ============================================================
-# ✅ Streamlit 기본 설정 (가장 위, 첫 st.*)
+# ✅ Streamlit 기본 설정 (반드시 가장 위, 첫 st.* 호출)
 # ============================================================
 st.set_page_config(page_title="JLPT Quiz", layout="centered")
-st.title("하테나일본어 형용사 퀴즈")
 
 # ============================================================
 # ✅ Supabase 연결 (Secrets 필수)
@@ -19,22 +18,7 @@ if "SUPABASE_URL" not in st.secrets or "SUPABASE_ANON_KEY" not in st.secrets:
 
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_ANON_KEY = st.secrets["SUPABASE_ANON_KEY"]
-
-# anon client (로그인/회원가입용)
 sb = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
-
-
-def get_authed_sb():
-    """
-    ✅ RLS 통과용: access_token을 PostgREST에 붙인 클라이언트
-    """
-    token = st.session_state.get("access_token")
-    if not token:
-        return None
-    sb2 = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
-    sb2.postgrest.auth(token)  # 핵심
-    return sb2
-
 
 # ============================================================
 # ✅ 상수/설정
@@ -51,6 +35,7 @@ mode_label_map = {"i_adj": "い형용사", "na_adj": "な형용사", "mix": "형
 # ============================================================
 def auth_box():
     st.subheader("로그인")
+
     tab1, tab2 = st.tabs(["로그인", "회원가입"])
 
     with tab1:
@@ -60,29 +45,14 @@ def auth_box():
         if st.button("로그인", use_container_width=True):
             if not email or not pw:
                 st.warning("이메일과 비밀번호를 입력해주세요.")
-                st.stop()
-
-            try:
-                res = sb.auth.sign_in_with_password({"email": email, "password": pw})
-
-                st.session_state.user = res.user
-
-                # ✅ session token (RLS용)
-                if res.session and res.session.access_token:
-                    st.session_state.access_token = res.session.access_token
-                    st.session_state.refresh_token = res.session.refresh_token
-                else:
-                    st.warning("로그인은 되었지만 세션 토큰이 없습니다. 이메일 인증 상태를 확인해주세요.")
-                    st.session_state.access_token = None
-                    st.session_state.refresh_token = None
-
-                st.success("로그인 완료!")
-                st.rerun()
-
-            except Exception as e:
-                st.error("로그인 실패: 이메일/비밀번호 또는 이메일 인증 상태를 확인해주세요.")
-                st.code(str(e))
-                st.stop()
+            else:
+                try:
+                    res = sb.auth.sign_in_with_password({"email": email, "password": pw})
+                    st.session_state.user = res.user
+                    st.success("로그인 완료!")
+                    st.rerun()
+                except Exception:
+                    st.error("로그인 실패: 이메일/비밀번호를 확인해주세요.")
 
     with tab2:
         email = st.text_input("이메일", key="signup_email")
@@ -91,15 +61,12 @@ def auth_box():
         if st.button("회원가입", use_container_width=True):
             if not email or not pw:
                 st.warning("이메일과 비밀번호를 입력해주세요.")
-                st.stop()
-
-            try:
-                sb.auth.sign_up({"email": email, "password": pw})
-                st.success("회원가입 요청 완료! 이메일 인증이 필요할 수 있어요.")
-            except Exception as e:
-                st.error("회원가입 실패: 이메일 형식/비밀번호 조건을 확인해주세요.")
-                st.code(str(e))
-                st.stop()
+            else:
+                try:
+                    sb.auth.sign_up({"email": email, "password": pw})
+                    st.success("회원가입 요청 완료! 이메일 인증이 필요할 수 있어요.")
+                except Exception:
+                    st.error("회원가입 실패: 이메일 형식/비밀번호 조건을 확인해주세요.")
 
 
 def require_login():
@@ -109,9 +76,9 @@ def require_login():
 
 
 # ============================================================
-# ✅ DB 저장/조회 함수 (반드시 sb_authed로 호출)
+# ✅ DB 저장 함수
 # ============================================================
-def save_attempt_to_db(sb_authed, user_id, level, pos_mode, quiz_len, score, wrong_list):
+def save_attempt_to_db(sb, user_id, level, pos_mode, quiz_len, score, wrong_list):
     payload = {
         "user_id": user_id,
         "level": level,
@@ -121,18 +88,7 @@ def save_attempt_to_db(sb_authed, user_id, level, pos_mode, quiz_len, score, wro
         "wrong_count": int(len(wrong_list)),
         "wrong_list": wrong_list,  # jsonb
     }
-    return sb_authed.table("quiz_attempts").insert(payload).execute()
-
-
-def fetch_recent_attempts(sb_authed, user_id, limit=10):
-    return (
-        sb_authed.table("quiz_attempts")
-        .select("created_at, level, pos_mode, quiz_len, score, wrong_count")
-        .eq("user_id", user_id)
-        .order("created_at", desc=True)
-        .limit(limit)
-        .execute()
-    )
+    sb.table("quiz_attempts").insert(payload).execute()
 
 
 # ============================================================
@@ -247,30 +203,28 @@ def render_naver_talk():
 
 
 # ============================================================
-# ✅ 로그인 강제 + 상단 표시/로그아웃
+# ✅ 로그인 강제 + 상단 UI
 # ============================================================
+st.title("하테나일본어 형용사 퀴즈")
+
 require_login()
 user = st.session_state.user
 user_id = user.id
 
+# 로그인 표시 + 로그아웃
 colA, colB = st.columns([7, 3])
 with colA:
-    st.caption(f"로그인: {getattr(user, 'email', '')}")
+    st.caption(f"로그인: {user.email}")
 with colB:
     if st.button("🚪 로그아웃", use_container_width=True):
+        # (서버 토큰 제거는 환경에 따라 실패할 수 있어 try)
         try:
             sb.auth.sign_out()
         except Exception:
             pass
 
-        for k in [
-            "user", "access_token", "refresh_token",
-            "quiz", "answers", "submitted", "wrong_list",
-            "quiz_version", "pos_mode", "saved_this_attempt",
-            "history", "wrong_counter", "total_counter",
-        ]:
-            if k in st.session_state:
-                del st.session_state[k]
+        # 로그인 세션 제거 + 퀴즈도 초기화(현재 방식 유지)
+        st.session_state.clear()
         st.rerun()
 
 # ============================================================
@@ -282,6 +236,7 @@ CSV_PATH = BASE_DIR / "data" / "words_adj_300.csv"
 df = pd.read_csv(CSV_PATH)
 if len(df.columns) == 1 and "\t" in df.columns[0]:
     df = pd.read_csv(CSV_PATH, sep="\t")
+
 df.columns = df.columns.astype(str).str.replace("\ufeff", "", regex=False).str.strip()
 
 pool = df[df["level"] == LEVEL].copy()
@@ -350,9 +305,11 @@ def build_quiz(mode: str) -> list:
     if mode == "mix":
         i_pool = base_pool[base_pool["pos"] == "i_adj"].copy()
         na_pool = base_pool[base_pool["pos"] == "na_adj"].copy()
+
         if len(i_pool) < 5 or len(na_pool) < 5:
             st.error(f"혼합 모드 단어 부족: i={len(i_pool)}, na={len(na_pool)}")
             st.stop()
+
         sampled = pd.concat([i_pool.sample(n=5), na_pool.sample(n=5)], ignore_index=True)
         sampled = sampled.sample(frac=1).reset_index(drop=True)
     else:
@@ -377,6 +334,7 @@ def build_quiz_from_wrongs(wrong_list: list, mode: str) -> list:
     retry_df = retry_df.sample(frac=1).reset_index(drop=True)
     return [make_question(retry_df.iloc[i], base_pool) for i in range(len(retry_df))]
 
+
 # ============================================================
 # ✅ 세션 초기화
 # ============================================================
@@ -391,6 +349,7 @@ if "wrong_list" not in st.session_state:
 if "saved_this_attempt" not in st.session_state:
     st.session_state.saved_this_attempt = False
 
+# 누적(세션) 통계
 if "history" not in st.session_state:
     st.session_state.history = []
 if "wrong_counter" not in st.session_state:
@@ -402,7 +361,7 @@ if "quiz" not in st.session_state:
     st.session_state.quiz = build_quiz(st.session_state.pos_mode)
 
 # ============================================================
-# ✅ 상단 UI
+# ✅ 상단 UI (출제 유형/새문제/초기화)
 # ============================================================
 selected = st.radio(
     "출제 유형",
@@ -433,6 +392,7 @@ with col1:
         st.session_state.saved_this_attempt = False
         st.session_state.quiz_version += 1
         st.rerun()
+
 with col2:
     if st.button("🧹 선택 초기화", use_container_width=True):
         st.session_state.submitted = False
@@ -441,6 +401,9 @@ with col2:
 
 st.divider()
 
+# ============================================================
+# ✅ answers 길이 자동 맞춤 (오답 재도전 대비)
+# ============================================================
 quiz_len = len(st.session_state.quiz)
 if "answers" not in st.session_state or len(st.session_state.answers) != quiz_len:
     st.session_state.answers = [None] * quiz_len
@@ -480,6 +443,7 @@ if st.session_state.submitted:
     for idx, q in enumerate(st.session_state.quiz):
         picked = st.session_state.answers[idx]
         correct = q["correct_text"]
+
         if picked == correct:
             score += 1
         else:
@@ -496,14 +460,8 @@ if st.session_state.submitted:
     st.session_state.wrong_list = wrong_list
     quiz_len = len(st.session_state.quiz)
 
+    # ✅ 결과 표시
     st.success(f"점수: {score} / {quiz_len}")
-
-    # ✅ 상태 확인
-    sb_authed = get_authed_sb()
-    st.write("token exists:", bool(st.session_state.get("access_token")))
-    st.write("user_id:", user_id)
-    st.write("sb_authed:", sb_authed is not None)
-
     ratio = score / quiz_len if quiz_len else 0
 
     if ratio == 1:
@@ -514,120 +472,109 @@ if st.session_state.submitted:
     else:
         st.warning("💪 괜찮아요! 틀린 문제는 성장의 재료예요. 다시 한 번 도전해봐요.")
 
-    # ✅ DB 저장/조회
-    if sb_authed is None:
-        st.warning("DB 저장/조회용 토큰이 없습니다. (로그인 세션 토큰 확인 필요)")
-    else:
-        if not st.session_state.saved_this_attempt:
-            try:
-                save_attempt_to_db(
-                    sb_authed=sb_authed,
-                    user_id=user_id,
-                    level=LEVEL,
-                    pos_mode=st.session_state.pos_mode,
-                    quiz_len=quiz_len,
-                    score=score,
-                    wrong_list=wrong_list,
-                )
-                st.session_state.saved_this_attempt = True
-            except Exception as e:
-                st.warning("DB 저장에 실패했습니다. 아래 에러를 확인해주세요.")
-                st.code(str(e))
+    # ✅ DB 저장(한 번만)
+    if not st.session_state.saved_this_attempt:
+        try:
+            save_attempt_to_db(
+                sb=sb,
+                user_id=user_id,
+                level=LEVEL,
+                pos_mode=st.session_state.pos_mode,
+                quiz_len=quiz_len,
+                score=score,
+                wrong_list=wrong_list,
+            )
+            st.session_state.saved_this_attempt = True
+        except Exception:
+            st.warning("DB 저장에 실패했습니다. (테이블/권한/RLS 정책을 확인해주세요)")
 
-        # ✅ (예쁘게) 내 기록 보기
-st.subheader("📌 내 최근 기록")
-
-def fmt_mode(m: str) -> str:
-    return {"i_adj": "い형용사", "na_adj": "な형용사", "mix": "혼합"}.get(m, m)
-
-def fmt_dt(s: str) -> str:
-    # created_at 예: "2026-01-31T12:34:56+00:00"
-    if not s:
-        return ""
-    return s.replace("T", " ")[:16]  # "2026-01-31 12:34"
-
-try:
-    res = fetch_recent_attempts(sb_authed, user_id, limit=10)
-    rows = res.data or []
-
-    if not rows:
-        st.info("아직 저장된 기록이 없습니다. 문제를 풀고 제출하면 기록이 쌓여요.")
-    else:
-        # --- 상단 요약(최근 10회) ---
-        df_hist = pd.DataFrame(rows)
-
-        # 안전 처리
-        if "score" in df_hist.columns and "quiz_len" in df_hist.columns:
-            df_hist["acc"] = (df_hist["score"] / df_hist["quiz_len"]) * 100
+    # ✅ (선택) 내 기록 보기
+    st.subheader("📌 내 최근 기록")
+    try:
+        res = (
+            sb.table("quiz_attempts")
+            .select("created_at, level, pos_mode, quiz_len, score, wrong_count")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .limit(10)
+            .execute()
+        )
+        if res.data:
+            df_hist = pd.DataFrame(res.data)
+            if "pos_mode" in df_hist.columns:
+                df_hist["pos_mode"] = df_hist["pos_mode"].replace({"i_adj": "い형용사", "na_adj": "な형용사", "mix": "혼합"})
+            st.dataframe(df_hist, use_container_width=True)
         else:
-            df_hist["acc"] = 0
+            st.info("아직 저장된 기록이 없습니다. 문제를 풀고 제출하면 기록이 쌓여요.")
+    except Exception:
+        st.info("기록을 불러오지 못했습니다. (DB 연결/RLS 확인 필요)")
 
-        avg_acc = df_hist["acc"].mean() if len(df_hist) else 0
-        best = df_hist["score"].max() if "score" in df_hist.columns else 0
-        latest = rows[0]
+    # ✅ 세션 누적 통계(원래 기능 유지)
+    st.session_state.history.append({"mode": st.session_state.pos_mode, "score": score, "total": quiz_len})
 
-        c1, c2, c3 = st.columns(3)
-        c1.metric("최근 10회 평균", f"{avg_acc:.0f}%")
-        c2.metric("최고 점수", f"{best} / {int(df_hist['quiz_len'].max()) if 'quiz_len' in df_hist.columns else 10}")
-        c3.metric("최근 점수", f"{latest.get('score', 0)} / {latest.get('quiz_len', 10)}")
+    for idx, q in enumerate(st.session_state.quiz):
+        word = q["jp_word"]
+        st.session_state.total_counter[word] = st.session_state.total_counter.get(word, 0) + 1
+        if st.session_state.answers[idx] != q["correct_text"]:
+            st.session_state.wrong_counter[word] = st.session_state.wrong_counter.get(word, 0) + 1
 
-        st.divider()
+    # ✅ 오답 있을 때만: 오답 재도전 + 오답 노트
+    if st.session_state.wrong_list:
+        st.subheader("❌ 오답 노트")
 
-        # --- 카드형 리스트 ---
-        for r in rows:
-            score = int(r.get("score", 0))
-            qlen = int(r.get("quiz_len", 10))
-            acc = int(round((score / qlen) * 100)) if qlen else 0
-            wrong = int(r.get("wrong_count", 0))
-            mode = fmt_mode(r.get("pos_mode", ""))
-            dt = fmt_dt(r.get("created_at", ""))
+        if st.button("❌ 틀린 문제만 다시 풀기", type="primary", use_container_width=True, key="retry_wrong"):
+            st.session_state.quiz = build_quiz_from_wrongs(st.session_state.wrong_list, st.session_state.pos_mode)
+            st.session_state.submitted = False
+            st.session_state.wrong_list = []
+            st.session_state.saved_this_attempt = False
+            st.session_state.quiz_version += 1
+            st.rerun()
 
-            # 등급 뱃지
-            if acc == 100:
-                badge = "🏆 완벽"
-            elif acc >= 80:
-                badge = "🔥 우수"
-            elif acc >= 60:
-                badge = "👍 양호"
-            else:
-                badge = "💪 성장"
-
+        for w in st.session_state.wrong_list:
             st.markdown(
                 f"""
-<div style="border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:14px 14px; margin-bottom:10px;">
-  <div style="display:flex; justify-content:space-between; align-items:center;">
-    <div style="font-size:15px; font-weight:700;">{badge} · {mode}</div>
-    <div style="font-size:12px; opacity:0.7;">{dt}</div>
-  </div>
+**Q{w['No']}**
 
-  <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-    <div style="padding:8px 10px; border-radius:12px; background:rgba(255,255,255,0.06);">
-      점수 <b>{score}/{qlen}</b> · 정답률 <b>{acc}%</b>
-    </div>
-    <div style="padding:8px 10px; border-radius:12px; background:rgba(255,255,255,0.06);">
-      오답 <b>{wrong}</b>개
-    </div>
-    <div style="padding:8px 10px; border-radius:12px; background:rgba(255,255,255,0.06);">
-      레벨 <b>{r.get("level","")}</b>
-    </div>
-  </div>
-</div>
-""",
-                unsafe_allow_html=True,
+- 문제: {w['문제']}
+- ❌ 내 답: **{w['내 답']}**
+- ✅ 정답: **{w['정답']}**
+
+📌 단어 정리  
+- 표기: **{w['단어']}**  
+- 읽기: {w['읽기']}  
+- 뜻: {w['뜻']}
+
+---
+"""
             )
 
-        # --- (선택) 간단한 추세 그래프 ---
-        # 최근 것이 위에 있으니 반대로 뒤집어 그래프 표시
-        df_plot = df_hist.copy()
-        df_plot = df_plot.iloc[::-1].reset_index(drop=True)
-        if "created_at" in df_plot.columns:
-            df_plot["created_at"] = df_plot["created_at"].astype(str).str.replace("T", " ").str[:16]
+    # ✅ 누적 현황(이번 세션)
+    st.divider()
+    st.subheader("📊 누적 학습 현황 (이번 세션)")
 
-        st.caption("최근 기록 추세")
-        st.line_chart(df_plot.set_index("created_at")[["acc"]])
+    total_attempts = sum(x["total"] for x in st.session_state.history) if st.session_state.history else 0
+    total_score = sum(x["score"] for x in st.session_state.history) if st.session_state.history else 0
+    acc = (total_score / total_attempts) if total_attempts else 0
 
-except Exception as e:
-    st.warning("기록을 불러오지 못했습니다. 아래 에러를 확인해주세요.")
-    st.write(getattr(e, "args", e))
+    c1, c2, c3 = st.columns(3)
+    c1.metric("누적 회차", len(st.session_state.history))
+    c2.metric("누적 점수", f"{total_score} / {total_attempts}")
+    c3.metric("누적 정답률", f"{acc*100:.0f}%")
 
+    if st.session_state.wrong_counter:
+        st.markdown("#### ❌ 자주 틀리는 단어 TOP 5")
+        top5 = sorted(st.session_state.wrong_counter.items(), key=lambda x: x[1], reverse=True)[:5]
+        for rank, (w, cnt) in enumerate(top5, start=1):
+            total_seen = st.session_state.total_counter.get(w, 0)
+            st.write(f"{rank}. **{w}**  —  {cnt}회 오답 / {total_seen}회 출제")
+    else:
+        st.info("아직 오답 누적 데이터가 없습니다.")
+
+    if st.button("🗑️ 누적 기록 초기화", use_container_width=True):
+        st.session_state.history = []
+        st.session_state.wrong_counter = {}
+        st.session_state.total_counter = {}
+        st.rerun()
+
+    # ✅ 제출 후 상담 배너
     render_naver_talk()
