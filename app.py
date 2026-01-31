@@ -7,7 +7,7 @@ import streamlit as st
 # 기본 설정
 # =====================
 st.set_page_config(page_title="JLPT Quiz", layout="centered")
-st.title("형용사 퀴즈")
+st.title("하테나일본어 형용사 퀴즈")
 NAVER_TALK_URL = "https://talk.naver.com/W45141"  # ✅ 네 네이버톡 링크로 교체
 
 # =====================
