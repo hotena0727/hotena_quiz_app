@@ -25,11 +25,11 @@ def auth_box():
             if not email or not pw:
                 st.warning("이메일과 비밀번호를 입력해주세요.")
         
-            else:      
-                res = sb.auth.sign_in_with_password({"email": email, "password": pw})
-                st.session_state.user = res.user
-                st.success("로그인 완료!")
-                st.rerun()
+        else:      
+            res = sb.auth.sign_in_with_password({"email": email, "password": pw})
+            st.session_state.user = res.user
+            st.success("로그인 완료!")
+            st.rerun()
 
     with tab2:
         email = st.text_input("이메일", key="signup_email")
@@ -39,10 +39,10 @@ def auth_box():
             if not email or not pw:
                 st.warning("이메일과 비밀번호를 입력해주세요.")
             
-            else:
-            sb.auth.sign_up({"email": email, "password": pw})
-            st.success("회원가입 요청 완료! 이메일 인증이 필요할 수 있어요.")
-            # Supabase 설정에 따라 이메일 인증 on/off
+        else:
+        sb.auth.sign_up({"email": email, "password": pw})
+        st.success("회원가입 요청 완료! 이메일 인증이 필요할 수 있어요.")
+        # Supabase 설정에 따라 이메일 인증 on/off
 
 def require_login():
     if "user" not in st.session_state or st.session_state.user is None:
