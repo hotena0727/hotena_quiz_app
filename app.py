@@ -59,6 +59,18 @@ user_id = user.id
 
 require_login()
 user_id = st.session_state.user.id
+def save_attempt_to_db(sb, user_id, level, pos_mode, quiz_len, score, wrong_list):
+    payload = {
+        "user_id": user_id,
+        "level": level,
+        "pos_mode": pos_mode,
+        "quiz_len": int(quiz_len),
+        "score": int(score),
+        "wrong_count": int(len(wrong_list)),
+        "wrong_list": wrong_list,  # 리스트 그대로 jsonb로 들어감
+    }
+    sb.table("quiz_attempts").insert(payload).execute()
+
 
 # =====================
 # 기본 설정
@@ -355,6 +367,7 @@ selected = st.radio(
 )
 
 if selected != st.session_state.pos_mode:
+    st.session_state.saved_this_attempt = False
     st.session_state.pos_mode = selected
     st.session_state.quiz = build_quiz(selected)
     st.session_state.submitted = False
@@ -368,6 +381,7 @@ st.divider()
 col1, col2 = st.columns(2)
 with col1:
     if st.button("🔄 새 문제(랜덤 10문항)", use_container_width=True):
+        st.session_state.saved_this_attempt = False
         st.session_state.quiz = build_quiz(st.session_state.pos_mode)
         st.session_state.submitted = False
         st.session_state.wrong_list = []
@@ -441,6 +455,19 @@ if st.session_state.submitted:
     st.session_state.wrong_list = wrong_list
 
     st.success(f"점수: {score} / {quiz_len}")
+    # ✅ DB 저장 (제출 1회당 1번만 저장되게 가드)
+if not st.session_state.get("saved_this_attempt", False):
+    save_attempt_to_db(
+        sb=sb,
+        user_id=user_id,
+        level=LEVEL,
+        pos_mode=st.session_state.get("pos_mode", "mix"),
+        quiz_len=quiz_len,
+        score=score,
+        wrong_list=wrong_list,
+    )
+    st.session_state.saved_this_attempt = True
+
     ratio = score / quiz_len if quiz_len else 0
     # --- 누적 기록 저장(세션) ---
     st.session_state.history.append({
@@ -471,6 +498,7 @@ if st.session_state.submitted:
         st.subheader("❌ 오답 노트")
 
         if st.button("❌ 틀린 문제만 다시 풀기", type="primary", use_container_width=True, key="retry_wrong"):
+            st.session_state.saved_this_attempt = False
             st.session_state.quiz = build_quiz_from_wrongs(st.session_state.wrong_list, st.session_state.pos_mode)
             st.session_state.submitted = False
             st.session_state.quiz_version += 1
