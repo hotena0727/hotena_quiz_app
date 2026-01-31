@@ -371,7 +371,7 @@ if st.session_state.submitted:
         .floating-naver-talk:active {
             text-decoration: none !important;
             color: inherit !important;
-    }
+        }
 
     .talk-btn {
         background: #03C75A;
