@@ -305,63 +305,63 @@ if st.session_state.submitted:
 
 
     if wrong_list:
-    st.subheader("❌ 오답 노트")
+        st.subheader("❌ 오답 노트")
 
-    # ✅ (1) "오답 재출제 버튼"만 스타일 먹이기 위한 CSS
-    st.markdown(
-        """
-        <style>
-        /* retry_wrong 버튼(특정 key)만 잡아서 스타일 적용 */
-        div.stButton > button[kind="secondary"][data-testid="baseButton-secondary"][aria-label="retry_wrong"] {
-            background: #ff4b4b !important;
-            color: white !important;
-            border: none !important;
-            border-radius: 12px !important;
-            padding: 0.8rem 1.1rem !important;
-            font-weight: 800 !important;
-            font-size: 16px !important;
-            box-shadow: 0 12px 28px rgba(0,0,0,0.18) !important;
-            animation: pulse 1.5s infinite;
-        }
+        # ✅ (1) "오답 재출제 버튼"만 스타일 먹이기 위한 CSS
+        st.markdown(
+            """
+            <style>
+            /* retry_wrong 버튼(특정 key)만 잡아서 스타일 적용 */
+            div.stButton > button[kind="secondary"][data-testid="baseButton-secondary"][aria-label="retry_wrong"] {
+                background: #ff4b4b !important;
+                color: white !important;
+                border: none !important;
+                border-radius: 12px !important;
+                padding: 0.8rem 1.1rem !important;
+                font-weight: 800 !important;
+                font-size: 16px !important;
+                box-shadow: 0 12px 28px rgba(0,0,0,0.18) !important;
+                animation: pulse 1.5s infinite;
+            }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.04); }
-            100% { transform: scale(1); }
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.04); }
+                100% { transform: scale(1); }
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
 
-    # ✅ (2) 버튼 (key가 중요!)
-    if st.button("❌ 틀린 문제만 다시 풀기", key="retry_wrong"):
-        base_pool = get_base_pool_for_mode()
-        st.session_state.quiz = build_quiz_from_wrongs(wrong_list, base_pool)
+        # ✅ (2) 버튼 (key가 중요!)
+        if st.button("❌ 틀린 문제만 다시 풀기", key="retry_wrong"):
+            base_pool = get_base_pool_for_mode()
+            st.session_state.quiz = build_quiz_from_wrongs(wrong_list, base_pool)
 
-        # 다시 풀기 모드로 초기화
-        st.session_state.submitted = False
-        st.session_state.quiz_version += 1
-        st.rerun()
+            # 다시 풀기 모드로 초기화
+            st.session_state.submitted = False
+            st.session_state.quiz_version += 1
+            st.rerun()
 
-# ✅ 오답 리스트 출력은 if 바깥(=있으면 출력, 없으면 아무것도 안 함)
-for w in wrong_list:
-    st.markdown(
-        f"""
-**Q{w['No']}**
+    # ✅ 오답 리스트 출력은 if 바깥(=있으면 출력, 없으면 아무것도 안 함)
+    for w in wrong_list:
+        st.markdown(
+            f"""
+    **Q{w['No']}**
 
-- 문제: {w['문제']}
-- ❌ 내 답: **{w['내 답']}**
-- ✅ 정답: **{w['정답']}**
+    - 문제: {w['문제']}
+    - ❌ 내 답: **{w['내 답']}**
+    - ✅ 정답: **{w['정답']}**
 
-📌 단어 정리  
-- 표기: **{w['단어']}**  
-- 읽기: {w['읽기']}  
-- 뜻: {w['뜻']}
+    📌 단어 정리  
+    - 표기: **{w['단어']}**  
+    - 읽기: {w['읽기']}  
+    - 뜻: {w['뜻']}
 
----
-"""
-    )
+    ---
+    """
+        )
     else:
         pass
     st.divider()
