@@ -7,7 +7,7 @@ import streamlit as st
 # 기본 설정
 # =====================
 st.set_page_config(page_title="JLPT Quiz", layout="centered")
-st.title("형용사 퀴즈 - 10問")
+st.title("い형용사 퀴즈 - 10問")
 
 # =====================
 # CSV 경로 (GitHub/Streamlit Cloud 안전)
