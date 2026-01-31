@@ -20,24 +20,26 @@ def auth_box():
     with tab1:
         email = st.text_input("이메일", key="login_email")
         pw = st.text_input("비밀번호", type="password", key="login_pw")
+        
         if st.button("로그인", use_container_width=True):
             if not email or not pw:
                 st.warning("이메일과 비밀번호를 입력해주세요.")
-                return
-            
-            res = sb.auth.sign_in_with_password({"email": email, "password": pw})
-            st.session_state.user = res.user
-            st.success("로그인 완료!")
-            st.rerun()
+        
+            else:            
+                res = sb.auth.sign_in_with_password({"email": email, "password": pw})
+                st.session_state.user = res.user
+                st.success("로그인 완료!")
+                st.rerun()
 
     with tab2:
         email = st.text_input("이메일", key="signup_email")
         pw = st.text_input("비밀번호", type="password", key="signup_pw")
+        
         if st.button("회원가입", use_container_width=True):
             if not email or not pw:
                 st.warning("이메일과 비밀번호를 입력해주세요.")
-                return
-
+            
+            else:
             sb.auth.sign_up({"email": email, "password": pw})
             st.success("회원가입 요청 완료! 이메일 인증이 필요할 수 있어요.")
             # Supabase 설정에 따라 이메일 인증 on/off
