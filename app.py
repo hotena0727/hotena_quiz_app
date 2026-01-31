@@ -20,6 +20,16 @@ SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_ANON_KEY = st.secrets["SUPABASE_ANON_KEY"]
 sb = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
+def get_authed_sb():
+    token = st.session_state.get("access_token")
+    if not token:
+        return None
+
+    sb2 = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+    # ✅ PostgREST 요청에 사용자 토큰을 붙임 (RLS 통과용)
+    sb2.postgrest.auth(token)
+    return sb2
+
 # ============================================================
 # ✅ 상수/설정
 # ============================================================
@@ -49,6 +59,10 @@ def auth_box():
                 try:
                     res = sb.auth.sign_in_with_password({"email": email, "password": pw})
                     st.session_state.user = res.user
+
+                    st.session_state.access_token = res.session.access_token
+                    st.session_state.refresh_token = res.session.refresh_token
+                    
                     st.success("로그인 완료!")
                     st.rerun()
                 except Exception:
@@ -224,8 +238,12 @@ with colB:
             pass
 
         # 로그인 세션 제거 + 퀴즈도 초기화(현재 방식 유지)
-        st.session_state.clear()
-        st.rerun()
+        st.session_state.user = None
+    st.session_state.access_token = None
+    st.session_state.refresh_token = None
+    st.session_state.clear()
+    st.rerun()
+
 
 # ============================================================
 # ✅ CSV 로드
@@ -476,7 +494,7 @@ if st.session_state.submitted:
     if not st.session_state.saved_this_attempt:
         try:
             save_attempt_to_db(
-                sb=sb,
+                sb=sb_authed,
                 user_id=user_id,
                 level=LEVEL,
                 pos_mode=st.session_state.pos_mode,
@@ -492,7 +510,7 @@ if st.session_state.submitted:
     st.subheader("📌 내 최근 기록")
     try:
         res = (
-            sb.table("quiz_attempts")
+            sb_authed.table("quiz_attempts")
             .select("created_at, level, pos_mode, quiz_len, score, wrong_count")
             .eq("user_id", user_id)
             .order("created_at", desc=True)
