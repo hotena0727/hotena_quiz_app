@@ -469,6 +469,26 @@ if not st.session_state.get("saved_this_attempt", False):
     st.session_state.saved_this_attempt = True
 
     ratio = score / quiz_len if quiz_len else 0
+    # =====================
+    # (선택) 내 기록 보기
+    # =====================
+    st.subheader("📌 내 최근 기록")
+
+    res = (
+        sb.table("quiz_attempts")
+        .select("created_at, level, pos_mode, quiz_len, score, wrong_count")
+        .eq("user_id", user_id)
+        .order("created_at", desc=True)
+        .limit(10)
+        .execute()
+    )
+
+    if res.data:
+        st.dataframe(res.data, use_container_width=True)
+    else:
+        st.info("아직 저장된 기록이 없습니다. 문제를 풀고 제출하면 기록이 쌓여요.")
+
+    
     # --- 누적 기록 저장(세션) ---
     st.session_state.history.append({
         "mode": st.session_state.pos_mode,
