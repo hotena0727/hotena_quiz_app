@@ -22,8 +22,8 @@ def auth_box():
         pw = st.text_input("비밀번호", type="password", key="login_pw")
         if st.button("로그인", use_container_width=True):
             if not email or not pw:
-            st.warning("이메일과 비밀번호를 입력해주세요.")
-            return
+                st.warning("이메일과 비밀번호를 입력해주세요.")
+                return
             
             res = sb.auth.sign_in_with_password({"email": email, "password": pw})
             st.session_state.user = res.user
