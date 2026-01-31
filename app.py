@@ -54,9 +54,9 @@ def make_question(row, pool_df):
     qtype = random.choice(QUESTION_TYPES)
 
     if qtype == "reading":
-    prompt = f"{row['jp_word']}의 발음은?"
-    correct = row["reading"]
-        # 오답: 다른 reading 3개
+        prompt = f"{row['jp_word']}의 발음은?"
+        correct = row["reading"]
+
         wrongs = (
             pool_df[pool_df["reading"] != correct]["reading"]
             .dropna()
@@ -64,14 +64,11 @@ def make_question(row, pool_df):
             .sample(n=3, replace=False)
             .tolist()
         )
-        
-        wrongs = list(set(wrongs))
 
-    
-else:  # meaning
-    prompt = f"{row['jp_word']}의 뜻은?"
-    correct = row["meaning"]
-        # 오답: 다른 meaning 3개
+    else:  # meaning
+        prompt = f"{row['jp_word']}의 뜻은?"
+        correct = row["meaning"]
+
         wrongs = (
             pool_df[pool_df["meaning"] != correct]["meaning"]
             .dropna()
@@ -79,6 +76,7 @@ else:  # meaning
             .sample(n=3, replace=False)
             .tolist()
         )
+
         wrongs = list(set(wrongs))
         
     choices = wrongs + [correct]
