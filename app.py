@@ -1,28 +1,27 @@
-import streamlit as st
 import pandas as pd
-import random
+import streamlit as st
 
-st.title("JLPT 형용사 퀴즈 (10문항)")
+st.set_page_config(page_title="JLPT Adjective Quiz", layout="centered")
+st.title("JLPT い形容詞クイズ (N4) - 10問")
 
-# 데이터 불러오기
-df = pd.read_csv("data/words_adj.csv")
+# ✅ CSV 불러오기
+df = pd.read_csv("data/words_adj_300.csv")
 
-st.subheader("테마 선택")
-theme = st.radio("선택", ["い형용사", "な형용사", "형용사 MIX"])
+# ✅ STEP1 없이: 기본값을 코드에 고정
+LEVEL = "N4"
+POS = "i_adj"
+N = 10
 
-if st.button("10문제 생성"):
-    if theme == "い형용사":
-        pool = df[df["pos"] == "i_adj"]
-    elif theme == "な형용사":
-        pool = df[df["pos"] == "na_adj"]
-    else:
-        pool = df[df["pos"].isin(["i_adj", "na_adj"])]
+pool = df[(df["level"] == LEVEL) & (df["pos"] == POS)].copy()
 
-    questions = pool.sample(n=10, replace=False)
-    st.session_state["today_set"] = questions
+if len(pool) < N:
+    st.error(f"단어가 부족합니다: pool={len(pool)}")
+    st.stop()
 
-if "today_set" in st.session_state:
-    st.subheader("오늘의 10문제")
-    for i, row in enumerate(st.session_state["today_set"].iterrows(), start=1):
-        r = row[1]
-        st.write(f"{i}. {r['jp_word']}  ({r['pos']})")
+# ✅ 랜덤 10개 뽑기
+questions = pool.sample(n=N, random_state=None).reset_index(drop=True)
+
+st.caption("일단은 랜덤 10개가 정상 출력되는지 확인합니다 (보기/채점은 다음 단계).")
+
+for i, row in questions.iterrows():
+    st.write(f"Q{i+1}. {row['jp_word']}  /  {row['reading']}  /  {row['meaning']}")
