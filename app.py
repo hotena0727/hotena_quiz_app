@@ -110,6 +110,7 @@ if "quiz" not in st.session_state:
     st.session_state.quiz = build_quiz()
     st.session_state.submitted = False
     st.session_state.answers = [None] * N
+    t.session_state.quiz_version = 0 
 
 col1, col2 = st.columns(2)
 with col1:
@@ -122,6 +123,7 @@ with col2:
     if st.button("🧹 선택 초기화"):
         st.session_state.submitted = False
         st.session_state.answers = [None] * N
+        st.session_state.quiz_version += 1
 
 st.divider()
 
@@ -136,7 +138,7 @@ for idx, q in enumerate(st.session_state.quiz):
         label="보기",
         options=q["choices"],
         index=None if st.session_state.answers[idx] is None else q["choices"].index(st.session_state.answers[idx]),
-        key=f"q_{idx}",
+        key=f"q_{st.session_state.quiz_version}_{idx}"
         label_visibility="collapsed"
     )
 
