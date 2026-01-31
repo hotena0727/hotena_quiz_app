@@ -110,7 +110,7 @@ if "quiz" not in st.session_state:
     st.session_state.quiz = build_quiz()
     st.session_state.submitted = False
     st.session_state.answers = [None] * N
-    t.session_state.quiz_version = 0 
+    st.session_state.quiz_version = 0 
 
 col1, col2 = st.columns(2)
 with col1:
@@ -130,15 +130,19 @@ st.divider()
 # =====================
 # 문제 표시
 # =====================
+# =====================
+# 문제 표시
+# =====================
 for idx, q in enumerate(st.session_state.quiz):
     st.subheader(f"Q{idx+1}")
     st.write(q["prompt"])
 
+    # ✅ 핵심: quiz_version을 key에 포함 -> 초기화 버튼 누르면 key가 바뀌어 선택이 싹 사라짐
     choice = st.radio(
         label="보기",
         options=q["choices"],
-        index=None if st.session_state.answers[idx] is None else q["choices"].index(st.session_state.answers[idx]),
-        key=f"q_{idx}"
+        index=None,
+        key=f"q_{st.session_state.quiz_version}_{idx}",
         label_visibility="collapsed"
     )
 
