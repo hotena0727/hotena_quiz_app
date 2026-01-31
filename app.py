@@ -51,23 +51,23 @@ QUESTION_TYPES = ["reading", "meaning"]
 def make_question(row, pool_df):
     """
     row: 정답 단어 1개
-    same_pos_pool: 같은 풀에서 오답 추출
-    return dict with: qtype, prompt, choices(list), correct_index(int), correct_text
+    pool_df: (혼합) 단어 풀
+    보기(오답)는 정답과 같은 pos(품사)에서만 뽑는다.
     """
     qtype = random.choice(QUESTION_TYPES)
+
+    # ✅ 정답과 같은 품사(pos)만 후보로 제한
     target_pos = row["pos"]
     same_pos_pool = pool_df[pool_df["pos"] == target_pos]
-
 
     if qtype == "reading":
         prompt = f"{row['jp_word']}의 발음은?"
         correct = row["reading"]
 
-        wrongs = (
-            pool_df[pool_df["reading"] != correct]["reading"]
+        candidates = (
+            same_pos_pool[same_pos_pool["reading"] != correct]["reading"]
             .dropna()
             .drop_duplicates()
-            .sample(n=3, replace=False)
             .tolist()
         )
 
@@ -75,16 +75,20 @@ def make_question(row, pool_df):
         prompt = f"{row['jp_word']}의 뜻은?"
         correct = row["meaning"]
 
-        wrongs = (
-            pool_df[pool_df["meaning"] != correct]["meaning"]
+        candidates = (
+            same_pos_pool[same_pos_pool["meaning"] != correct]["meaning"]
             .dropna()
             .drop_duplicates()
-            .sample(n=3, replace=False)
             .tolist()
         )
 
-        wrongs = list(set(wrongs))
-        
+    # ✅ 오답 후보가 부족하면 안내
+    if len(candidates) < 3:
+        st.error(f"오답 후보 부족: pos={target_pos}, 후보={len(candidates)}개")
+        st.stop()
+
+    wrongs = random.sample(candidates, 3)
+
     choices = wrongs + [correct]
     random.shuffle(choices)
     correct_index = choices.index(correct)
@@ -98,7 +102,9 @@ def make_question(row, pool_df):
         "jp_word": row["jp_word"],
         "reading": row["reading"],
         "meaning": row["meaning"],
+        "pos": row["pos"],
     }
+
 
 def build_quiz():
     # 10개 랜덤 출제
