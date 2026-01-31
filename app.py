@@ -258,7 +258,7 @@ sb_authed = get_authed_sb()
 # 로그인 표시 + 로그아웃
 colA, colB = st.columns([7, 3])
 with colA:
-    st.caption(f"로그인: {getattr(user, 'email', '')}")
+    st.caption("환영합니다 🙂")
 with colB:
     if st.button("🚪 로그아웃", use_container_width=True):
         try:
