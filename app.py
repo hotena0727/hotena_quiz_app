@@ -8,6 +8,7 @@ from supabase import create_client
 # ✅ Streamlit 기본 설정 (반드시 가장 위, 첫 st.* 호출)
 # ============================================================
 st.set_page_config(page_title="JLPT Quiz", layout="centered")
+st.title("하테나일본어 형용사 퀴즈")
 
 # ============================================================
 # ✅ Supabase 연결 (Secrets 필수)
@@ -18,7 +19,22 @@ if "SUPABASE_URL" not in st.secrets or "SUPABASE_ANON_KEY" not in st.secrets:
 
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_ANON_KEY = st.secrets["SUPABASE_ANON_KEY"]
+
+# anon client (로그인/회원가입용)
 sb = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+
+def get_authed_sb():
+    """
+    ✅ RLS 통과용: access_token을 PostgREST에 붙인 클라이언트
+    """
+    token = st.session_state.get("access_token")
+    if not token:
+        return None
+    sb2 = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+    sb2.postgrest.auth(token)  # 핵심
+    return sb2
+
 
 # ============================================================
 # ✅ 상수/설정
@@ -28,14 +44,13 @@ LEVEL = "N4"
 N = 10
 QUESTION_TYPES = ["reading", "meaning"]
 mode_label_map = {"i_adj": "い형용사", "na_adj": "な형용사", "mix": "형용사 혼합"}
-
+pos_label_for_table = {"i_adj": "い형용사", "na_adj": "な형용사", "mix": "혼합"}
 
 # ============================================================
 # ✅ 로그인 UI
 # ============================================================
 def auth_box():
     st.subheader("로그인")
-
     tab1, tab2 = st.tabs(["로그인", "회원가입"])
 
     with tab1:
@@ -45,14 +60,29 @@ def auth_box():
         if st.button("로그인", use_container_width=True):
             if not email or not pw:
                 st.warning("이메일과 비밀번호를 입력해주세요.")
-            else:
-                try:
-                    res = sb.auth.sign_in_with_password({"email": email, "password": pw})
-                    st.session_state.user = res.user
-                    st.success("로그인 완료!")
-                    st.rerun()
-                except Exception:
-                    st.error("로그인 실패: 이메일/비밀번호를 확인해주세요.")
+                st.stop()
+
+            try:
+                res = sb.auth.sign_in_with_password({"email": email, "password": pw})
+
+                # ✅ user 저장
+                st.session_state.user = res.user
+
+                # ✅ access_token 저장 (RLS용)
+                if res.session and res.session.access_token:
+                    st.session_state.access_token = res.session.access_token
+                    st.session_state.refresh_token = res.session.refresh_token
+                else:
+                    st.warning("로그인은 되었지만 세션 토큰이 없습니다. 이메일 인증 상태를 확인해주세요.")
+                    st.session_state.access_token = None
+                    st.session_state.refresh_token = None
+
+                st.success("로그인 완료!")
+                st.rerun()
+
+            except Exception:
+                st.error("로그인 실패: 이메일/비밀번호 또는 이메일 인증 상태를 확인해주세요.")
+                st.stop()
 
     with tab2:
         email = st.text_input("이메일", key="signup_email")
@@ -61,12 +91,14 @@ def auth_box():
         if st.button("회원가입", use_container_width=True):
             if not email or not pw:
                 st.warning("이메일과 비밀번호를 입력해주세요.")
-            else:
-                try:
-                    sb.auth.sign_up({"email": email, "password": pw})
-                    st.success("회원가입 요청 완료! 이메일 인증이 필요할 수 있어요.")
-                except Exception:
-                    st.error("회원가입 실패: 이메일 형식/비밀번호 조건을 확인해주세요.")
+                st.stop()
+
+            try:
+                sb.auth.sign_up({"email": email, "password": pw})
+                st.success("회원가입 요청 완료! 이메일 인증이 필요할 수 있어요.")
+            except Exception:
+                st.error("회원가입 실패: 이메일 형식/비밀번호 조건을 확인해주세요.")
+                st.stop()
 
 
 def require_login():
@@ -76,9 +108,9 @@ def require_login():
 
 
 # ============================================================
-# ✅ DB 저장 함수
+# ✅ DB 저장/조회 함수 (반드시 sb_authed로 호출)
 # ============================================================
-def save_attempt_to_db(sb, user_id, level, pos_mode, quiz_len, score, wrong_list):
+def save_attempt_to_db(sb_authed, user_id, level, pos_mode, quiz_len, score, wrong_list):
     payload = {
         "user_id": user_id,
         "level": level,
@@ -88,7 +120,18 @@ def save_attempt_to_db(sb, user_id, level, pos_mode, quiz_len, score, wrong_list
         "wrong_count": int(len(wrong_list)),
         "wrong_list": wrong_list,  # jsonb
     }
-    sb.table("quiz_attempts").insert(payload).execute()
+    sb_authed.table("quiz_attempts").insert(payload).execute()
+
+
+def fetch_recent_attempts(sb_authed, user_id, limit=10):
+    return (
+        sb_authed.table("quiz_attempts")
+        .select("created_at, level, pos_mode, quiz_len, score, wrong_count")
+        .eq("user_id", user_id)
+        .order("created_at", desc=True)
+        .limit(limit)
+        .execute()
+    )
 
 
 # ============================================================
@@ -205,26 +248,34 @@ def render_naver_talk():
 # ============================================================
 # ✅ 로그인 강제 + 상단 UI
 # ============================================================
-st.title("하테나일본어 형용사 퀴즈")
-
 require_login()
 user = st.session_state.user
 user_id = user.id
 
+# RLS용 클라이언트 (있을 수도/없을 수도)
+sb_authed = get_authed_sb()
+
 # 로그인 표시 + 로그아웃
 colA, colB = st.columns([7, 3])
 with colA:
-    st.caption(f"로그인: {user.email}")
+    st.caption(f"로그인: {getattr(user, 'email', '')}")
 with colB:
     if st.button("🚪 로그아웃", use_container_width=True):
-        # (서버 토큰 제거는 환경에 따라 실패할 수 있어 try)
         try:
             sb.auth.sign_out()
         except Exception:
             pass
 
-        # 로그인 세션 제거 + 퀴즈도 초기화(현재 방식 유지)
-        st.session_state.clear()
+        # ✅ clear()는 버그를 부르기 쉬움: 필요한 키만 삭제
+        for k in [
+            "user", "access_token", "refresh_token",
+            "quiz", "answers", "submitted", "wrong_list",
+            "quiz_version", "pos_mode", "saved_this_attempt",
+            "history", "wrong_counter", "total_counter",
+        ]:
+            if k in st.session_state:
+                del st.session_state[k]
+
         st.rerun()
 
 # ============================================================
@@ -472,42 +523,57 @@ if st.session_state.submitted:
     else:
         st.warning("💪 괜찮아요! 틀린 문제는 성장의 재료예요. 다시 한 번 도전해봐요.")
 
-    # ✅ DB 저장(한 번만)
-    if not st.session_state.saved_this_attempt:
-        try:
-            save_attempt_to_db(
-                sb=sb,
-                user_id=user_id,
-                level=LEVEL,
-                pos_mode=st.session_state.pos_mode,
-                quiz_len=quiz_len,
-                score=score,
-                wrong_list=wrong_list,
-            )
-            st.session_state.saved_this_attempt = True
-        except Exception:
-            st.warning("DB 저장에 실패했습니다. (테이블/권한/RLS 정책을 확인해주세요)")
+    # ✅ DB 저장/조회는 sb_authed로만 (RLS 정책 통과)
+    sb_authed = get_authed_sb()
+    if sb_authed is None:
+        st.warning("DB 저장/조회용 토큰이 없습니다. (로그인 세션 토큰 확인 필요)")
+    else:
+        # ✅ DB 저장(한 번만)
+        if not st.session_state.saved_this_attempt:
+            try:
+                save_attempt_to_db(
+                    sb_authed=sb_authed,
+                    user_id=user_id,
+                    level=LEVEL,
+                    pos_mode=st.session_state.pos_mode,
+                    quiz_len=quiz_len,
+                    score=score,
+                    wrong_list=wrong_list,
+                )
+                st.session_state.saved_this_attempt = True
+            except Exception as e:
+                st.warning("DB 저장에 실패했습니다. (테이블/컬럼/권한/RLS 정책 확인 필요)")
+                st.write(getattr(e, "args", e))
 
-    # ✅ (선택) 내 기록 보기
-    st.subheader("📌 내 최근 기록")
-    try:
-        res = (
-            sb.table("quiz_attempts")
-            .select("created_at, level, pos_mode, quiz_len, score, wrong_count")
-            .eq("user_id", user_id)
-            .order("created_at", desc=True)
-            .limit(10)
-            .execute()
-        )
-        if res.data:
-            df_hist = pd.DataFrame(res.data)
-            if "pos_mode" in df_hist.columns:
-                df_hist["pos_mode"] = df_hist["pos_mode"].replace({"i_adj": "い형용사", "na_adj": "な형용사", "mix": "혼합"})
-            st.dataframe(df_hist, use_container_width=True)
-        else:
-            st.info("아직 저장된 기록이 없습니다. 문제를 풀고 제출하면 기록이 쌓여요.")
-    except Exception:
-        st.info("기록을 불러오지 못했습니다. (DB 연결/RLS 확인 필요)")
+        # ✅ 내 최근 기록 (보기 좋게)
+        st.subheader("📌 내 최근 기록")
+        try:
+            res = fetch_recent_attempts(sb_authed, user_id, limit=10)
+            if res.data:
+                df_hist = pd.DataFrame(res.data)
+
+                if "pos_mode" in df_hist.columns:
+                    df_hist["pos_mode"] = df_hist["pos_mode"].map(lambda x: pos_label_for_table.get(x, x))
+
+                if "created_at" in df_hist.columns:
+                    df_hist["created_at"] = pd.to_datetime(df_hist["created_at"]).dt.tz_localize(None)
+
+                df_hist = df_hist.rename(columns={
+                    "created_at": "일시",
+                    "level": "레벨",
+                    "pos_mode": "유형",
+                    "quiz_len": "문항",
+                    "score": "점수",
+                    "wrong_count": "오답",
+                })
+
+                st.dataframe(df_hist[["일시", "레벨", "유형", "문항", "점수", "오답"]],
+                             use_container_width=True, hide_index=True)
+            else:
+                st.info("아직 저장된 기록이 없습니다. 문제를 풀고 제출하면 기록이 쌓여요.")
+        except Exception as e:
+            st.info("기록을 불러오지 못했습니다. (DB/RLS 확인 필요)")
+            st.write(getattr(e, "args", e))
 
     # ✅ 세션 누적 통계(원래 기능 유지)
     st.session_state.history.append({"mode": st.session_state.pos_mode, "score": score, "total": quiz_len})
