@@ -279,3 +279,24 @@ if st.session_state.submitted:
             )
     else:
         pass
+st.divider()
+st.markdown("### 💬 일본어 공부, 여기서 막히셨나요?")
+
+st.markdown(
+    """
+    <a href="https://talk.naver.com/XXXXXXX" target="_blank">
+        <button style="
+            background-color:#03C75A;
+            color:white;
+            padding:12px 20px;
+            border:none;
+            border-radius:8px;
+            font-size:16px;
+            cursor:pointer;
+        ">
+        네이버톡으로 바로 상담하기
+        </button>
+    </a>
+    """,
+    unsafe_allow_html=True
+)
