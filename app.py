@@ -137,9 +137,31 @@ def make_question(row, pool_df):
 
 
 def build_quiz():
-    # 10개 랜덤 출제
-    sampled = pool.sample(n=N).reset_index(drop=True)
-    quiz = [make_question(sampled.iloc[i], pool) for i in range(N)]
+    """
+    st.session_state.pos_mode 값에 따라 출제 풀을 바꿔서 10문제를 만든다.
+    - "i_adj"  : い형용사만
+    - "na_adj" : な형용사만
+    - "mix"    : 둘 다 혼합
+    """
+    mode = st.session_state.get("pos_mode", "mix")
+
+    # 1) 출제용 pool 만들기
+    if mode == "mix":
+        filtered = pool[pool["pos"].isin(["i_adj", "na_adj"])].copy()
+    else:
+        filtered = pool[pool["pos"] == mode].copy()
+
+    # 2) 단어 수 부족하면 중단
+    if len(filtered) < N:
+        st.error(f"단어가 부족합니다: mode={mode}, pool={len(filtered)}")
+        st.stop()
+
+    # 3) 랜덤 10개 뽑아서 문제 생성
+    sampled = filtered.sample(n=N).reset_index(drop=True)
+
+    # 4) 보기(오답)도 같은 품사에서만 뽑히게 하려면,
+    #    make_question에 넘기는 pool_df도 filtered로 주는 게 가장 안정적.
+    quiz = [make_question(sampled.iloc[i], filtered) for i in range(N)]
     return quiz
 
 # =====================
