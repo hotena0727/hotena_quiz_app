@@ -64,7 +64,10 @@ def make_question(row, pool_df):
             .sample(n=3, replace=False)
             .tolist()
         )
+        
+        wrongs = list(set(wrongs))
 
+    
     else:  # meaning
         prompt = f"【뜻】{row['jp_word']} "
         correct = row["meaning"]
@@ -76,7 +79,8 @@ def make_question(row, pool_df):
             .sample(n=3, replace=False)
             .tolist()
         )
-
+        wrongs = list(set(wrongs))
+        
     choices = wrongs + [correct]
     random.shuffle(choices)
     correct_index = choices.index(correct)
