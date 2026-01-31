@@ -307,7 +307,7 @@ if st.session_state.submitted:
     if wrong_list:
         st.subheader("❌ 오답 노트")
 
-   st.markdown(
+    st.markdown(
     """
     <style>
     @keyframes pulse {
@@ -331,15 +331,14 @@ if st.session_state.submitted:
     </style>
     """,
     unsafe_allow_html=True
-)     
+)
 
-        
-        if st.button("❌ 틀린 문제만 다시 풀기"):
-            base_pool = get_base_pool_for_mode()
-            st.session_state.quiz = build_quiz_from_wrongs(wrong_list, base_pool)
-            st.session_state.submitted = False
-            st.session_state.quiz_version += 1
-            st.rerun()
+if st.button("❌ 틀린 문제만 다시 풀기", key="retry_wrong"):
+    base_pool = get_base_pool_for_mode()
+    st.session_state.quiz = build_quiz_from_wrongs(wrong_list, base_pool)
+    st.session_state.submitted = False
+    st.session_state.quiz_version += 1
+    st.rerun()
         
     for w in wrong_list:
         st.markdown(
