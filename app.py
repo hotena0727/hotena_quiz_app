@@ -51,10 +51,13 @@ QUESTION_TYPES = ["reading", "meaning"]
 def make_question(row, pool_df):
     """
     row: 정답 단어 1개
-    pool_df: 같은 풀에서 오답 추출
+    same_pos_pool: 같은 풀에서 오답 추출
     return dict with: qtype, prompt, choices(list), correct_index(int), correct_text
     """
     qtype = random.choice(QUESTION_TYPES)
+    target_pos = row["pos"]
+    same_pos_pool = pool_df[pool_df["pos"] == target_pos]
+
 
     if qtype == "reading":
         prompt = f"{row['jp_word']}의 발음은?"
