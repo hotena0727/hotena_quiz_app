@@ -292,6 +292,9 @@ if st.session_state.submitted:
                 "뜻": q["meaning"],
             })
 
+    # ✅ 여기 추가 (핵심!)
+    st.session_state.wrong_list = wrong_list
+    
     st.success(f"점수: {score} / {quiz_len}")
     ratio = score / quiz_len if quiz_len else 0
 
