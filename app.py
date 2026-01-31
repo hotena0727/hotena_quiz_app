@@ -401,7 +401,7 @@ if st.session_state.submitted:
                 <span>💬</span>
                 <span class="talk-text">
                     하테나쌤 1:1 톡톡 상담
-                    <small>수강신청 질문하기</small>
+                    <small>수강신청 문의하기</small>
                 </span>
             </button>
         </div>
