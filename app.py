@@ -138,7 +138,7 @@ for idx, q in enumerate(st.session_state.quiz):
         label="보기",
         options=q["choices"],
         index=None if st.session_state.answers[idx] is None else q["choices"].index(st.session_state.answers[idx]),
-        key=f"q_{st.session_state.quiz_version}_{idx}"
+        key=f"q_{idx}"
         label_visibility="collapsed"
     )
 
