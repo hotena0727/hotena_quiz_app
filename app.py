@@ -299,7 +299,7 @@ if st.session_state.submitted:
 
 
     # ✅ 오답이 있을 때만: "틀린 문제만 다시 풀기" 버튼 보여주기
- if st.session_state.wrong_list:
+    if st.session_state.wrong_list:
     if st.button("❌ 틀린 문제만 다시 풀기", type="primary", use_container_width=True):
         # 현재 모드에 맞는 base_pool 만들기
         base_pool = get_base_pool_for_mode()
