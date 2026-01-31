@@ -14,7 +14,7 @@ st.caption(f"CSV 경로: {CSV_PATH}")
 st.caption(f"CSV 존재: {CSV_PATH.exists()}")
 
 # ✅ CSV 불러오기
-df = pd.read_csv(CSV_PATH)
+df = pd.read_csv(CSV_PATH, sep="\t")
 
 # 🔽🔽🔽 바로 여기 추가 🔽🔽🔽
 df.columns = (
