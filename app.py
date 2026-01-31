@@ -365,8 +365,29 @@ if st.session_state.submitted:
 
     /* 모바일에서 너무 아래면 살짝 올리기 */
     @media (max-width: 600px) {
-        .floating-naver-talk { bottom: 110px; right: 14px; }
-        .talk-btn { padding: 13px 16px; font-size: 14px; }
+        .floating-naver-talk,
+    .floating-naver-talk:visited,
+    .floating-naver-talk:hover,
+    .floating-naver-talk:active {
+        text-decoration: none !important;
+        color: inherit !important;
+    }
+
+    .talk-btn {
+        background: #03C75A;
+        color: #fff;
+        border: 0;
+        border-radius: 999px;
+        padding: 14px 18px;
+        font-size: 15px;
+        font-weight: 700;
+        box-shadow: 0 12px 28px rgba(0,0,0,0.22);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        line-height: 1.1;
+        text-decoration: none !important; /* ✅ 혹시 모를 밑줄 방지 */
     }
     </style>
 
