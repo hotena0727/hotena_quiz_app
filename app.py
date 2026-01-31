@@ -54,7 +54,7 @@ def make_question(row, pool_df):
     qtype = random.choice(QUESTION_TYPES)
 
     if qtype == "reading":
-        prompt = f"【읽기】{row['jp_word']} の読み方は？"
+        prompt = f"【읽기】{row['jp_word']} "
         correct = row["reading"]
         # 오답: 다른 reading 3개
         wrongs = (
@@ -66,7 +66,7 @@ def make_question(row, pool_df):
         )
 
     else:  # meaning
-        prompt = f"【뜻】{row['jp_word']} の意味は？"
+        prompt = f"【뜻】{row['jp_word']} "
         correct = row["meaning"]
         # 오답: 다른 meaning 3개
         wrongs = (
