@@ -9,6 +9,36 @@ import streamlit as st
 st.set_page_config(page_title="JLPT Quiz", layout="centered")
 st.title("형용사 퀴즈")
 
+st.caption("출제 유형을 선택하세요")
+
+b1, b2, b3 = st.columns(3)
+
+with b1:
+    if st.button("い형용사"):
+        st.session_state.pos_mode = "i_adj"
+        st.session_state.quiz = build_quiz()
+        st.session_state.answers = [None] * N
+        st.session_state.submitted = False
+        st.session_state.quiz_version += 1
+
+with b2:
+    if st.button("な형용사"):
+        st.session_state.pos_mode = "na_adj"
+        st.session_state.quiz = build_quiz()
+        st.session_state.answers = [None] * N
+        st.session_state.submitted = False
+        st.session_state.quiz_version += 1
+
+with b3:
+    if st.button("혼합"):
+        st.session_state.pos_mode = "mix"
+        st.session_state.quiz = build_quiz()
+        st.session_state.answers = [None] * N
+        st.session_state.submitted = False
+        st.session_state.quiz_version += 1
+
+st.divider()
+
 # =====================
 # CSV 경로 (GitHub/Streamlit Cloud 안전)
 # =====================
@@ -116,6 +146,7 @@ def build_quiz():
 # 세션: 퀴즈 유지/재생성
 # =====================
 if "quiz" not in st.session_state:
+    st.session_state.pos_mode = "mix"
     st.session_state.quiz = build_quiz()
     st.session_state.submitted = False
     st.session_state.answers = [None] * N
