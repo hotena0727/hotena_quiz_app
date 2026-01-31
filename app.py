@@ -143,9 +143,9 @@ if "quiz" not in st.session_state:
     st.session_state.answers = [None] * N
 
 mode_label_map = {
-    "i_adj": "い形容詞",
-    "na_adj": "な形容詞",
-    "mix": "혼합",
+    "i_adj": "い형용사",
+    "na_adj": "な형용사",
+    "mix": "MIX",
 }
 
 selected = st.radio(
