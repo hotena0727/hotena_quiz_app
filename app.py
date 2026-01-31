@@ -7,7 +7,7 @@ import streamlit as st
 # 기본 설정
 # =====================
 st.set_page_config(page_title="JLPT Quiz", layout="centered")
-st.title("い형용사 퀴즈 - 10問")
+st.title("い형용사 퀴즈")
 
 # =====================
 # CSV 경로 (GitHub/Streamlit Cloud 안전)
@@ -174,7 +174,7 @@ if st.session_state.submitted:
 
     st.success(f"점수: {score} / {N}")
 
-if wrong_list:
+    if wrong_list:
     st.subheader("❌ 오답 노트")
 
     for w in wrong_list:
@@ -194,6 +194,6 @@ if wrong_list:
 ---
 """
         )
-else:
+    else:
     st.balloons()
     st.write("전부 정답! 완벽합니다.")
