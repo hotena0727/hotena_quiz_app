@@ -136,7 +136,7 @@ def restore_session_from_cookies():
         cookies.save()
 
 
-restore_session_from_cookies()
+        restore_session_from_cookies()
 
 
 
