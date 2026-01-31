@@ -370,14 +370,14 @@ if st.session_state.submitted:
     }
     </style>
 
-    <a class="floating-naver-talk" href="https://talk.naver.com/XXXXXXX" target="_blank" rel="noopener noreferrer">
+    <a class="floating-naver-talk" href="https://talk.naver.com/W45141" target="_blank" rel="noopener noreferrer">
         <div class="floating-wrap">
             <span class="badge"></span>
             <button class="talk-btn">
                 <span>💬</span>
                 <span class="talk-text">
-                    네이버톡 상담
-                    <small>오답 바로 질문하기</small>
+                    하테나쌤 1:1 톡톡 상담
+                    <small>수강신청 질문하기</small>
                 </span>
             </button>
         </div>
