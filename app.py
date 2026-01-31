@@ -176,15 +176,12 @@ if st.session_state.submitted:
 
     st.success(f"점수: {score} / {N}")
 
-    if wrong_list:
 if wrong_list:
     st.subheader("❌ 오답 노트")
-    st.dataframe(pd.DataFrame(wrong_list), use_container_width=True)
-else:
-    ...
 
-for w in wrong_list:
-    st.markdown(f"""
+    for w in wrong_list:
+        st.markdown(
+            f"""
 **Q{w['No']}**
 
 - 문제: {w['문제']}
@@ -197,12 +194,8 @@ for w in wrong_list:
 - 뜻: {w['뜻']}
 
 ---
-""")
-
-
-
-
-    
-    else:
-        st.balloons()
-        st.write("전부 정답! 완벽합니다.")
+"""
+        )
+else:
+    st.balloons()
+    st.write("전부 정답! 완벽합니다.")
