@@ -545,35 +545,158 @@ if st.session_state.submitted:
                 st.warning("DB 저장에 실패했습니다. (테이블/컬럼/권한/RLS 정책 확인 필요)")
                 st.write(getattr(e, "args", e))
 
-        # ✅ 내 최근 기록 (보기 좋게)
+                # ✅ 내 최근 기록 (예쁘게: 요약 + 카드 리스트)
         st.subheader("📌 내 최근 기록")
+
         try:
             res = fetch_recent_attempts(sb_authed, user_id, limit=10)
-            if res.data:
-                df_hist = pd.DataFrame(res.data)
 
-                if "pos_mode" in df_hist.columns:
-                    df_hist["pos_mode"] = df_hist["pos_mode"].map(lambda x: pos_label_for_table.get(x, x))
-
-                if "created_at" in df_hist.columns:
-                    df_hist["created_at"] = pd.to_datetime(df_hist["created_at"]).dt.tz_localize(None)
-
-                df_hist = df_hist.rename(columns={
-                    "created_at": "일시",
-                    "level": "레벨",
-                    "pos_mode": "유형",
-                    "quiz_len": "문항",
-                    "score": "점수",
-                    "wrong_count": "오답",
-                })
-
-                st.dataframe(df_hist[["일시", "레벨", "유형", "문항", "점수", "오답"]],
-                             use_container_width=True, hide_index=True)
-            else:
+            if not res.data:
                 st.info("아직 저장된 기록이 없습니다. 문제를 풀고 제출하면 기록이 쌓여요.")
+            else:
+                hist = pd.DataFrame(res.data).copy()
+
+                # 정리/가공
+                hist["created_at"] = pd.to_datetime(hist["created_at"]).dt.tz_localize(None)
+                hist["유형"] = hist["pos_mode"].map(lambda x: pos_label_for_table.get(x, x))
+                hist["정답률"] = (hist["score"] / hist["quiz_len"]).fillna(0)
+
+                # ✅ 요약 카드(최근 10회)
+                avg_rate = float(hist["정답률"].mean() * 100)
+                best = int(hist["score"].max())
+                last_score = int(hist.iloc[0]["score"])
+                last_total = int(hist.iloc[0]["quiz_len"])
+
+                c1, c2, c3 = st.columns(3)
+                c1.metric("최근 10회 평균", f"{avg_rate:.0f}%")
+                c2.metric("최고 점수", f"{best} / {N}")
+                c3.metric("최근 점수", f"{last_score} / {last_total}")
+
+                st.divider()
+
+                # ✅ 카드 스타일 (streamlit theme에 어울리게)
+                st.markdown(
+                    """
+<style>
+.record-card{
+  border: 1px solid rgba(120,120,120,0.25);
+  border-radius: 16px;
+  padding: 14px 14px;
+  margin-bottom: 10px;
+  background: rgba(255,255,255,0.02);
+}
+.record-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom: 8px;
+}
+.record-title{
+  font-weight: 800;
+  font-size: 16px;
+}
+.record-sub{
+  opacity: 0.75;
+  font-size: 12px;
+}
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid rgba(120,120,120,0.25);
+  background: rgba(255,255,255,0.03);
+}
+.row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top: 8px;
+}
+.kv{
+  display:flex;
+  gap:8px;
+  align-items:baseline;
+}
+.k{
+  opacity: 0.7;
+  font-size: 12px;
+}
+.v{
+  font-weight: 800;
+  font-size: 14px;
+}
+.small{
+  opacity:0.75;
+  font-size: 12px;
+  margin-top: 6px;
+}
+</style>
+""",
+                    unsafe_allow_html=True,
+                )
+
+                # ✅ 카드로 10개 표시
+                for _, r in hist.iterrows():
+                    dt = r["created_at"].strftime("%Y-%m-%d %H:%M")
+                    mode = r["유형"]
+                    score = int(r["score"])
+                    total = int(r["quiz_len"])
+                    wrong = int(r["wrong_count"])
+                    pct = float(r["정답률"] * 100)
+
+                    # 점수에 따른 배지 이모지(가독성)
+                    if pct >= 90:
+                        badge = "🏆"
+                    elif pct >= 70:
+                        badge = "👍"
+                    else:
+                        badge = "💪"
+
+                    st.markdown(
+                        f"""
+<div class="record-card">
+  <div class="record-top">
+    <div>
+      <div class="record-title">{badge} {score} / {total}</div>
+      <div class="record-sub">{dt} · {mode} · 레벨 {LEVEL}</div>
+    </div>
+    <div class="pill">오답 {wrong}개</div>
+  </div>
+</div>
+""",
+                        unsafe_allow_html=True,
+                    )
+                    # 진행바는 streamlit 컴포넌트가 더 예쁨
+                    st.progress(min(max(pct / 100.0, 0.0), 1.0))
+                    st.caption(f"정답률 {pct:.0f}%")
+                    st.write("")  # 카드 사이 여백
+
+                # (선택) “표로 보기” 토글
+                with st.expander("표로도 보기(관리자/디버그용)"):
+                    show = hist.rename(columns={
+                        "created_at": "일시",
+                        "level": "레벨",
+                        "pos_mode": "pos_mode(원값)",
+                        "quiz_len": "문항",
+                        "score": "점수",
+                        "wrong_count": "오답",
+                    })
+                    show["일시"] = show["일시"].dt.strftime("%Y-%m-%d %H:%M")
+                    st.dataframe(
+                        show[["일시", "레벨", "유형", "문항", "점수", "오답", "pos_mode(원값)"]],
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+
         except Exception as e:
             st.info("기록을 불러오지 못했습니다. (DB/RLS 확인 필요)")
             st.write(getattr(e, "args", e))
+
 
     # ✅ 세션 누적 통계(원래 기능 유지)
     st.session_state.history.append({"mode": st.session_state.pos_mode, "score": score, "total": quiz_len})
