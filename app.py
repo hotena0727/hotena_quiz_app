@@ -366,11 +366,11 @@ if st.session_state.submitted:
     /* 모바일에서 너무 아래면 살짝 올리기 */
     @media (max-width: 600px) {
         .floating-naver-talk,
-    .floating-naver-talk:visited,
-    .floating-naver-talk:hover,
-    .floating-naver-talk:active {
-        text-decoration: none !important;
-        color: inherit !important;
+        .floating-naver-talk:visited,
+        .floating-naver-talk:hover,
+        .floating-naver-talk:active {
+            text-decoration: none !important;
+            color: inherit !important;
     }
 
     .talk-btn {
