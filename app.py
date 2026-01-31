@@ -126,7 +126,7 @@ def build_quiz():
             na_pool.sample(n=5)
         ]).sample(frac=1).reset_index(drop=True)
 
-        quiz = [make_question(sampled.iloc[i], sampled) for i in range(N)]
+        quiz = [make_question(sampled.iloc[i], pool) for i in range(N)]
         return quiz
 
     # ✅ 2) 혼합이 아니라면: 해당 pos에서만 10개 뽑는다
@@ -140,6 +140,44 @@ def build_quiz():
     quiz = [make_question(sampled.iloc[i], filtered) for i in range(N)]
     return quiz
 
+def build_quiz_from_wrongs(wrong_list, base_pool):
+    """
+    wrong_list: 채점에서 만든 리스트 (wrong_list.append({...}) 했던 그 리스트)
+    base_pool : 보기(오답) 뽑을 기준 풀 (현재 모드의 filtered 추천)
+
+    return: quiz(list)  -> 기존 st.session_state.quiz 형태와 동일
+    """
+
+    # 1) 오답 리스트에서 '단어'만 뽑기 (중복 제거)
+    wrong_words = list({w["단어"] for w in wrong_list})
+
+    # 2) base_pool에서 해당 단어들만 다시 추출
+    retry_df = base_pool[base_pool["jp_word"].isin(wrong_words)].copy()
+
+    # 3) 혹시 못 찾는 단어가 있으면 안내 (데이터 불일치 방지)
+    if len(retry_df) == 0:
+        st.error("오답 단어를 풀에서 찾지 못했습니다. (jp_word 매칭 확인 필요)")
+        st.stop()
+
+    # 4) 다시 풀 문제 개수 = 오답 개수 (최대 N개로 제한해도 됨)
+    retry_df = retry_df.sample(frac=1).reset_index(drop=True)  # 섞기
+
+    # 5) 기존 make_question을 그대로 재사용해서 퀴즈 생성
+    #    (보기는 같은 품사에서 뽑히도록 make_question 내부가 이미 처리 중)
+    retry_quiz = [make_question(retry_df.iloc[i], base_pool) for i in range(len(retry_df))]
+
+    return retry_quiz
+
+def get_base_pool_for_mode():
+    mode = st.session_state.get("pos_mode", "mix")
+
+    if mode == "i_adj":
+        return pool[pool["pos"] == "i_adj"].copy()
+    elif mode == "na_adj":
+        return pool[pool["pos"] == "na_adj"].copy()
+    else:  # mix
+        return pool[pool["pos"].isin(["i_adj", "na_adj"])].copy()
+    
 # =====================
 # 세션: 퀴즈 유지/재생성
 # =====================
@@ -200,6 +238,12 @@ st.divider()
 # =====================
 # 문제 표시
 # =====================
+quiz_len = len(st.session_state.quiz)
+
+# answers 길이가 퀴즈 길이랑 다르면 맞춰준다 (오답만 다시풀기 대비)
+if "answers" not in st.session_state or len(st.session_state.answers) != quiz_len:
+    st.session_state.answers = [None] * quiz_len
+    
 for idx, q in enumerate(st.session_state.quiz):
     st.subheader(f"Q{idx+1}")
     st.write(q["prompt"])
@@ -248,9 +292,8 @@ if st.session_state.submitted:
                 "뜻": q["meaning"],
             })
 
-    st.success(f"점수: {score} / {N}")
-    
-    ratio = score / N
+    st.success(f"점수: {score} / {quiz_len}")
+    ratio = score / quiz_len if quiz_len else 0
 
     if ratio == 1:
         st.balloons()
@@ -264,6 +307,13 @@ if st.session_state.submitted:
     if wrong_list:
         st.subheader("❌ 오답 노트")
 
+        if st.button("❌ 틀린 문제만 다시 풀기"):
+            base_pool = get_base_pool_for_mode()
+            st.session_state.quiz = build_quiz_from_wrongs(wrong_list, base_pool)
+            st.session_state.submitted = False
+            st.session_state.quiz_version += 1
+            st.rerun()
+        
     for w in wrong_list:
         st.markdown(
             f"""
