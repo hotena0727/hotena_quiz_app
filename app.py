@@ -298,12 +298,16 @@ if st.session_state.submitted:
         100% { transform: scale(2.2); opacity: 0; }
     }
 
-    .floating-naver-talk {
+    .floating-naver-talk,
+    .floating-naver-talk:visited,
+    .floating-naver-talk:hover,
+    .floating-naver-talk:active {
         position: fixed;
         right: 18px;
-        bottom: 90px;   /* footer 위로 */
+        bottom: 90px;
         z-index: 99999;
-        text-decoration: none;
+        text-decoration: none !important;
+        color: inherit !important;
     }
 
     .floating-wrap {
@@ -325,17 +329,23 @@ if st.session_state.submitted:
         align-items: center;
         gap: 10px;
         line-height: 1.1;
-        text-decoration: none !important; /*
+        text-decoration: none !important;
     }
 
     .talk-btn:hover { filter: brightness(0.95); }
 
+    .talk-text {
+        display: inline-block;
+        white-space: normal; /* ✅ 2줄 싫으면 한 줄 고정 */
+    }
+
     .talk-text small {
         display: block;
+        margin-left: 0px; 
+        margin-top: 2px; /* ✅ 작은 문구는 옆에 붙여서 한 줄 */
         font-size: 12px;
         font-weight: 600;
         opacity: 0.95;
-        margin-top: 2px;
     }
 
     /* 🔴 빨간 알림 점 */
@@ -350,7 +360,6 @@ if st.session_state.submitted:
         box-shadow: 0 6px 14px rgba(0,0,0,0.25);
     }
 
-    /* 🔴 빨간 점이 ‘펑펑’ 울리는 링 */
     .badge::after {
         content: "";
         position: absolute;
@@ -364,38 +373,31 @@ if st.session_state.submitted:
         animation: ping 1.2s ease-out infinite;
     }
 
-    /* 모바일에서 너무 아래면 살짝 올리기 */
     @media (max-width: 600px) {
         .floating-naver-talk,
         .floating-naver-talk:visited,
         .floating-naver-talk:hover,
         .floating-naver-talk:active {
-            text-decoration: none !important;
-            color: inherit !important;
-    }
+            right: 14px;
+            bottom: 110px;
+        }
 
-    .talk-btn {
-        background: #03C75A;
-        color: #fff;
-        border: 0;
-        border-radius: 999px;
-        padding: 14px 18px;
-        font-size: 15px;
-        font-weight: 700;
-        box-shadow: 0 12px 28px rgba(0,0,0,0.22);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        line-height: 1.1;
-        text-decoration: none !important; /* ✅ 혹시 모를 밑줄 방지 */
+        .talk-btn {
+            padding: 13px 16px;
+            font-size: 14px;
+        }
+
+        .talk-text small {
+            margin-left: 6px;
+            font-size: 11px;
+        }
     }
     </style>
 
     <a class="floating-naver-talk" href="https://talk.naver.com/W45141" target="_blank" rel="noopener noreferrer">
         <div class="floating-wrap">
             <span class="badge"></span>
-            <button class="talk-btn">
+            <button class="talk-btn" type="button">
                 <span>💬</span>
                 <span class="talk-text">
                     하테나쌤 1:1 톡톡 상담
