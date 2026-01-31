@@ -148,9 +148,12 @@ if "pos_mode" not in st.session_state:
 if "quiz_version" not in st.session_state:
     st.session_state.quiz_version = 0
 if "quiz" not in st.session_state:
+    st.session_state.pos_mode = "mix"
     st.session_state.quiz = build_quiz()
     st.session_state.submitted = False
     st.session_state.answers = [None] * N
+    st.session_state.quiz_version = 0
+    st.session_state.mode = "full"
 
 mode_label_map = {
     "i_adj": "い형용사",
