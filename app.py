@@ -283,43 +283,43 @@ if st.session_state.submitted:
     st.markdown("### 💬 일본어 공부, 여기서 막히셨나요?")
 
     st.markdown(
-    f"""
-    <style>
-    .floating-naver-talk {{
-        position: fixed;
-        right: 20px;
-        bottom: 90px;   /* ⭐ 핵심: footer 위로 띄움 */
-        z-index: 99999;
-        text-decoration: none;
-    }}
-    .floating-naver-talk button {{
-        background: #03C75A;
-        color: white;
-        border: none;
-        border-radius: 999px;
-        padding: 14px 18px;
-        font-size: 15px;
-        font-weight: 600;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.22);
-        cursor: pointer;
-    }}
-    .floating-naver-talk button:hover {{
-        filter: brightness(0.95);
-    }}
-    .floating-naver-talk small {{
-        display: block;
-        font-size: 12px;
-        opacity: 0.9;
-        margin-top: 2px;
-    }}
-    </style>
+        f"""
+        <style>
+        .floating-naver-talk {{
+            position: fixed;
+            right: 20px;
+            bottom: 90px;   /* ⭐ 핵심: footer 위로 띄움 */
+            z-index: 99999;
+            text-decoration: none;
+        }}
+        .floating-naver-talk button {{
+            background: #03C75A;
+            color: white;
+            border: none;
+            border-radius: 999px;
+            padding: 14px 18px;
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.22);
+            cursor: pointer;
+        }}
+        .floating-naver-talk button:hover {{
+            filter: brightness(0.95);
+        }}
+        .floating-naver-talk small {{
+            display: block;
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 2px;
+        }}
+        </style>
 
-    <a class="floating-naver-talk" href="{NAVER_TALK_URL}" target="_blank">
-        <button>
-            💬 네이버톡 상담
-            <small>오답 바로 질문하기</small>
-        </button>
-    </a>
-    """,
-    unsafe_allow_html=True
-)
+        <a class="floating-naver-talk" href="{NAVER_TALK_URL}" target="_blank">
+            <button>
+                💬 네이버톡 상담
+                <small>오답 바로 질문하기</small>
+            </button>
+        </a>
+        """,
+        unsafe_allow_html=True
+    )
