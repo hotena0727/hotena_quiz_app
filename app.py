@@ -540,11 +540,12 @@ if "answers" not in st.session_state or len(st.session_state.answers) != quiz_le
 # ============================================================
 for idx, q in enumerate(st.session_state.quiz):
     st.subheader(f"Q{idx+1}")
-    st.markdown(f'<div class="jp" style="font-size:22px; font-weight:700;">{q["jp_word"]}</div>',
-             unsafe_allow_html=True)
 
-    st.markdown(f'<div class="jp">{q["prompt"]}</div>', unsafe_allow_html=True)
-    st.write(q["prompt"])
+    # ✅ 한 줄만 출력 (일본어/한자 포함되는 문자열을 jp로 감싼다)
+    st.markdown(
+        f'<div class="jp" style="font-size:18px; font-weight:500;">{q["prompt"]}</div>',
+        unsafe_allow_html=True
+    )
 
     choice = st.radio(
         label="보기",
