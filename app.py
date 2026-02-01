@@ -20,12 +20,14 @@ st.set_page_config(page_title="JLPT Quiz", layout="centered")
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&display=swap');
-
-:root, html, body, *{
-  font-family: "M PLUS Rounded 1c",
-               "Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif !important;
-  font-feature-settings: "locl" 1;
+:root, html, body, * {
+  font-family:
+    "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN",
+    "Yu Gothic",
+    "Meiryo",
+    "MS PGothic",
+    sans-serif !important;
 }
 </style>
 """, unsafe_allow_html=True)
