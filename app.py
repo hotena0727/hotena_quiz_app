@@ -20,17 +20,10 @@ st.set_page_config(page_title="JLPT Quiz", layout="centered")
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
 
-:root{
-  --jp-rounded: "M PLUS Rounded 1c","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
-}
-
-.jp, .jp *{
-  font-family: var(--jp-rounded) !important;
-  line-height: 1.7;
-  letter-spacing: .2px;
-}
+:root{ --jp-rounded: "Zen Maru Gothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif; }
+.jp, .jp *{ font-family: var(--jp-rounded) !important; line-height:1.7; letter-spacing:.2px; }
 </style>
 """, unsafe_allow_html=True)
 
