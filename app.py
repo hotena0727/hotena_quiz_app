@@ -22,10 +22,8 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
 
-/* 핵심: Noto Sans JP를 최우선 + !important로 강제 */
-:root, html, body, *{
-  font-family: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
-               "Yu Gothic", "Meiryo", sans-serif !important;
+.jp, .jp *{
+  font-family: "Noto Sans JP","Yu Gothic","Meiryo",sans-serif !important;
   font-feature-settings: "locl" 1;
 }
 </style>
