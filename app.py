@@ -20,9 +20,14 @@ st.set_page_config(page_title="JLPT Quiz", layout="centered")
 
 st.markdown("""
 <style>
-html, body, [class*="css"] {
-  font-family: 'Noto Sans JP', sans-serif !important;
-  font-size: 22px !important;
+:root, html, body, * {
+  font-family:
+    "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN",
+    "Yu Gothic",
+    "Meiryo",
+    "MS PGothic",
+    sans-serif !important;
 }
 </style>
 """, unsafe_allow_html=True)
