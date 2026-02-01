@@ -17,6 +17,22 @@ if not cookies.ready():
 # ✅ Streamlit 기본 설정 (반드시 가장 위, 첫 st.* 호출)
 # ============================================================
 st.set_page_config(page_title="JLPT Quiz", layout="centered")
+
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont,
+                     'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Meiryo',
+                     sans-serif;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 st.title("하테나일본어 형용사 퀴즈")
 
 # ============================================================
