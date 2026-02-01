@@ -310,22 +310,31 @@ with colA:
     st.caption("환영합니다 🙂")
 with colB:
     if st.button("🚪 로그아웃", use_container_width=True):
+        # 1) Supabase sign out (실패해도 계속 진행)
         try:
             sb.auth.sign_out()
         except Exception:
             pass
 
-        # ✅ clear()는 버그를 부르기 쉬움: 필요한 키만 삭제
+        # 2) ✅ 쿠키 제거 (핵심: refresh_token 제거)
+        try:
+            cookies["access_token"] = ""
+            cookies["refresh_token"] = ""
+            cookies.save()
+        except Exception:
+            pass
+
+        # 3) ✅ 세션 제거
         for k in [
             "user", "access_token", "refresh_token",
             "quiz", "answers", "submitted", "wrong_list",
             "quiz_version", "pos_mode", "saved_this_attempt",
             "history", "wrong_counter", "total_counter",
         ]:
-            if k in st.session_state:
-                del st.session_state[k]
+            st.session_state.pop(k, None)
 
         st.rerun()
+
 
 # ============================================================
 # ✅ CSV 로드
