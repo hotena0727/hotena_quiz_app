@@ -18,7 +18,16 @@ if not cookies.ready():
 # ============================================================
 st.set_page_config(page_title="JLPT Quiz", layout="centered")
 
-st.markdown(f'<div class="jp">{q["jp_word"]}</div>', unsafe_allow_html=True)
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+.jp, .jp *{
+  font-family: "Noto Sans JP","Hiragino Sans","Yu Gothic","Meiryo",sans-serif !important;
+  font-feature-settings: "locl" 1;
+}
+</style>
+""", unsafe_allow_html=True)
 
 st.title("하테나일본어 형용사 퀴즈")
 
@@ -525,6 +534,11 @@ if "answers" not in st.session_state or len(st.session_state.answers) != quiz_le
 # ============================================================
 for idx, q in enumerate(st.session_state.quiz):
     st.subheader(f"Q{idx+1}")
+
+    # ✅ 일본어 표기만 일본폰트 적용
+    st.markdown(f'<div class="jp">{q["prompt"]}</div>', unsafe_allow_html=True)
+
+    
     st.write(q["prompt"])
 
     choice = st.radio(
