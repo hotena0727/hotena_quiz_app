@@ -20,10 +20,10 @@ st.set_page_config(page_title="JLPT Quiz", layout="centered")
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&display=swap');
 
 :root, html, body, *{
-  font-family: "Zen Kaku Gothic New",
+  font-family: "M PLUS Rounded 1c",
                "Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif !important;
   font-feature-settings: "locl" 1;
 }
