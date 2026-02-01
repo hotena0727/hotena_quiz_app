@@ -20,18 +20,19 @@ st.set_page_config(page_title="JLPT Quiz", layout="centered")
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
 
-:root{
-  --jp-sans: "Noto Sans JP","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
-  --jp-serif:"Noto Serif JP","Hiragino Mincho ProN","Yu Mincho","MS PMincho",serif;
+:root {
+  --jp-font: "Noto Sans JP","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
 }
 
-/* 기본 UI는 산세리프 */
-html, body, [class*="css"] { font-family: var(--jp-sans) !important; }
+.jp, .jp * { font-family: var(--jp-font) !important; }
 
-/* 문제(일본어 문장)만 세리프로 */
-.jp, .jp * { font-family: var(--jp-serif) !important; line-height: 1.7; }
+/* 보기/문제 UI도 같이 정돈 */
+.jp{
+  letter-spacing: 0.2px;
+  line-height: 1.6;
+}
 </style>
 """, unsafe_allow_html=True)
 
