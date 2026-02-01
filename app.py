@@ -20,21 +20,16 @@ st.set_page_config(page_title="JLPT Quiz", layout="centered")
 
 st.markdown("""
 <style>
-/* 페이지 어디에선가 실제 적용 폰트를 텍스트로 확인하기 위한 디버그 */
-#font-debug {
-  padding: 10px 12px;
-  border: 1px solid rgba(120,120,120,.25);
-  border-radius: 12px;
-  margin: 10px 0 14px 0;
-  background: rgba(255,255,255,.03);
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+/* 핵심: Noto Sans JP를 최우선 + !important로 강제 */
+:root, html, body, *{
+  font-family: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+               "Yu Gothic", "Meiryo", sans-serif !important;
+  font-feature-settings: "locl" 1;
 }
 </style>
-
-<div id="font-debug">
-  <b>폰트 테스트:</b> 日本語テスト：漢字（骨・直・令・辺） / ひらがな / カタカナ
-</div>
 """, unsafe_allow_html=True)
-
 
 st.title("하테나일본어 형용사 퀴즈")
 
