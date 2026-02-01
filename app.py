@@ -23,8 +23,14 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
 
 .jp, .jp *{
-  font-family: "Noto Sans JP","Hiragino Sans","Yu Gothic","Meiryo",sans-serif !important;
-  font-feature-settings: "locl" 1;
+  font-family:
+    "Yu Gothic UI",
+    "Yu Gothic",
+    "Meiryo UI",
+    "Meiryo",
+    "MS PGothic",
+    "Noto Sans JP",
+    sans-serif !important;
 }
 </style>
 """, unsafe_allow_html=True)
