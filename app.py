@@ -534,11 +534,6 @@ if "answers" not in st.session_state or len(st.session_state.answers) != quiz_le
 # ============================================================
 for idx, q in enumerate(st.session_state.quiz):
     st.subheader(f"Q{idx+1}")
-
-    # ✅ 일본어 표기만 일본폰트 적용
-    st.markdown(f'<div class="jp" style="font-size:22px; font-weight:700;">{q["jp_word"]}</div>',
-                unsafe_allow_html=True)
-    
     st.write(q["prompt"])
 
     choice = st.radio(
