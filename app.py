@@ -18,16 +18,7 @@ if not cookies.ready():
 # ============================================================
 st.set_page_config(page_title="JLPT Quiz", layout="centered")
 
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
-
-.jp, .jp *{
-  font-family: "Noto Sans JP","Yu Gothic","Meiryo",sans-serif !important;
-  font-feature-settings: "locl" 1;
-}
-</style>
-""", unsafe_allow_html=True)
+st.markdown(f'<div class="jp">{q["jp_word"]}</div>', unsafe_allow_html=True)
 
 st.title("하테나일본어 형용사 퀴즈")
 
