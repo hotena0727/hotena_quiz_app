@@ -22,15 +22,16 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
 
-.jp, .jp *{
-  font-family:
-    "Yu Gothic UI",
-    "Yu Gothic",
-    "Meiryo UI",
-    "Meiryo",
-    "MS PGothic",
-    "Noto Sans JP",
-    sans-serif !important;
+:root {
+  --jp-font: "Noto Sans JP","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+}
+
+.jp, .jp * { font-family: var(--jp-font) !important; }
+
+/* 보기/문제 UI도 같이 정돈 */
+.jp{
+  letter-spacing: 0.2px;
+  line-height: 1.6;
 }
 </style>
 """, unsafe_allow_html=True)
