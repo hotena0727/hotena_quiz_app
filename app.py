@@ -636,8 +636,9 @@ if st.session_state.submitted:
                 )
                 st.session_state.saved_this_attempt = True
             except Exception as e:
-                st.warning("DB 저장에 실패했습니다. (테이블/컬럼/권한/RLS 정책 확인 필요)")
-                st.write(getattr(e, "args", e))
+                st.error("❌ 단어 통계(stats) 저장 실패 - 아래 에러 확인")
+                st.exception(e)                 # <- 이게 핵심 (트레이스까지 보여줌)
+                st.write("e.args =", getattr(e, "args", None))
 
                 # ✅ 내 최근 기록 (예쁘게: 요약 + 카드 리스트)
         st.subheader("📌 내 최근 기록")
