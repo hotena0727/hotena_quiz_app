@@ -311,13 +311,13 @@ require_login()
 user = st.session_state.user
 user_id = user.id
 
+# ✅✅✅ (저장 관련) sb_authed는 쓰기 전에 먼저 만들어야 함
+sb_authed = get_authed_sb()
+
 st.write("token 있음?", bool(st.session_state.get("access_token")))
 st.write("sb_authed None?", sb_authed is None)
 st.write("user_id:", user_id)
 
-
-# RLS용 클라이언트 (있을 수도/없을 수도)
-sb_authed = get_authed_sb()
 
 # 로그인 표시 + 로그아웃
 colA, colB = st.columns([7, 3])
@@ -420,6 +420,7 @@ def make_question(row: pd.Series, base_pool: pd.DataFrame) -> dict:
         "reading": row["reading"],
         "meaning": row["meaning"],
         "pos": row["pos"],
+        "quiz_type": qtype,   # ✅(저장 관련) quiz_type 보관
     }
 
 
@@ -519,7 +520,7 @@ if st.button("🧪 RPC 테스트(1회)"):
         st.success("✅ RPC 호출 성공")
     except Exception as e:
         st.error("❌ RPC 호출 실패")
-        st.exception(e)
+        st.write(getattr(e, "args", e))
 
 
 st.caption(f"현재 선택: **{mode_label_map[st.session_state.pos_mode]}**")
@@ -587,11 +588,14 @@ if st.session_state.submitted:
     score = 0
     wrong_list = []
 
+    # ✅✅✅ (저장 관련) 제출 시점에 sb_authed를 다시 확보(토큰 갱신/복구 대비)
+    sb_authed = get_authed_sb()
+
     for idx, q in enumerate(st.session_state.quiz):
         picked = st.session_state.answers[idx]
         correct = q["correct_text"]
         is_correct = (picked == correct)
-    
+
         if is_correct:
             score += 1
         else:
@@ -605,20 +609,19 @@ if st.session_state.submitted:
                 "뜻": q["meaning"],
             })
 
-        # ✅✅✅ 여기서 단어 통계 RPC 기록
+        # ✅✅✅ (저장 관련) 여기서 단어 통계 RPC 기록 (문항별)
         if sb_authed is not None:
             try:
                 sb_authed.rpc("record_word_result", {
-                    "p_word_key": q["jp_word"],     # ← DB 설계대로 word_key로 쓸 값
+                    "p_word_key": q["jp_word"],
                     "p_level": LEVEL,
-                    "p_pos": q["pos"],
-                    "p_quiz_type": "adj_quiz",      # 원하는 태그로 (예: "reading"/"meaning" 등도 가능)
-                    "p_is_correct": is_correct
+                    "p_pos": q.get("pos", ""),
+                    "p_quiz_type": q.get("quiz_type", ""),  # ✅ reading/meaning
+                    "p_is_correct": bool(is_correct),
                 }).execute()
             except Exception as e:
-                st.error("❌ record_word_result RPC 실패")
+                st.error("❌ 단어 통계(stats) 저장 실패했습니다. (RPC/권한/RLS 확인 필요)")
                 st.write(getattr(e, "args", e))
-
 
     st.session_state.wrong_list = wrong_list
     quiz_len = len(st.session_state.quiz)
@@ -636,7 +639,6 @@ if st.session_state.submitted:
         st.warning("💪 괜찮아요! 틀린 문제는 성장의 재료예요. 다시 한 번 도전해봐요.")
 
     # ✅ DB 저장/조회는 sb_authed로만 (RLS 정책 통과)
-    sb_authed = get_authed_sb()
     if sb_authed is None:
         st.warning("DB 저장/조회용 토큰이 없습니다. (로그인 세션 토큰 확인 필요)")
     else:
@@ -654,11 +656,10 @@ if st.session_state.submitted:
                 )
                 st.session_state.saved_this_attempt = True
             except Exception as e:
-                st.error("❌ 단어 통계(stats) 저장 실패 - 아래 에러 확인")
-                st.exception(e)                 # <- 이게 핵심 (트레이스까지 보여줌)
-                st.write("e.args =", getattr(e, "args", None))
+                st.error("DB 저장에 실패했습니다. (테이블/컬럼/권한/RLS 정책 확인 필요)")
+                st.write(getattr(e, "args", e))
 
-                # ✅ 내 최근 기록 (예쁘게: 요약 + 카드 리스트)
+        # ✅ 내 최근 기록 (예쁘게: 요약 + 카드 리스트)
         st.subheader("📌 내 최근 기록")
 
         try:
@@ -757,7 +758,7 @@ if st.session_state.submitted:
                 for _, r in hist.iterrows():
                     dt = r["created_at"].strftime("%Y-%m-%d %H:%M")
                     mode = r["유형"]
-                    score = int(r["score"])
+                    score2 = int(r["score"])
                     total = int(r["quiz_len"])
                     wrong = int(r["wrong_count"])
                     pct = float(r["정답률"] * 100)
@@ -775,7 +776,7 @@ if st.session_state.submitted:
 <div class="record-card">
   <div class="record-top">
     <div>
-      <div class="record-title">{badge} {score} / {total}</div>
+      <div class="record-title">{badge} {score2} / {total}</div>
       <div class="record-sub">{dt} · {mode} · 레벨 {LEVEL}</div>
     </div>
     <div class="pill">오답 {wrong}개</div>
