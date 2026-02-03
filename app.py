@@ -311,6 +311,11 @@ require_login()
 user = st.session_state.user
 user_id = user.id
 
+st.write("✅ 세션 user:", user.email if hasattr(user, "email") else user)
+st.write("✅ access_token 있음?", bool(st.session_state.get("access_token")))
+st.write("✅ sb_authed 생성됨?", sb_authed is not None)
+
+
 # RLS용 클라이언트 (있을 수도/없을 수도)
 sb_authed = get_authed_sb()
 
@@ -567,8 +572,9 @@ if st.session_state.submitted:
     for idx, q in enumerate(st.session_state.quiz):
         picked = st.session_state.answers[idx]
         correct = q["correct_text"]
-
-        if picked == correct:
+        is_correct = (picked == correct)
+    
+        if is_correct:
             score += 1
         else:
             wrong_list.append({
@@ -580,6 +586,21 @@ if st.session_state.submitted:
                 "읽기": q["reading"],
                 "뜻": q["meaning"],
             })
+
+        # ✅✅✅ 여기서 단어 통계 RPC 기록
+        if sb_authed is not None:
+            try:
+                sb_authed.rpc("record_word_result", {
+                    "p_word_key": q["jp_word"],     # ← DB 설계대로 word_key로 쓸 값
+                    "p_level": LEVEL,
+                    "p_pos": q["pos"],
+                    "p_quiz_type": "adj_quiz",      # 원하는 태그로 (예: "reading"/"meaning" 등도 가능)
+                    "p_is_correct": is_correct
+                }).execute()
+            except Exception as e:
+                st.error("❌ record_word_result RPC 실패")
+                st.write(getattr(e, "args", e))
+
 
     st.session_state.wrong_list = wrong_list
     quiz_len = len(st.session_state.quiz)
