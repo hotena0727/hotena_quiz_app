@@ -33,14 +33,12 @@ st.title("い형용사 퀴즈")
 # ✅ Cookies
 # ============================================================
 cookies = EncryptedCookieManager(
-    prefix="hatena_jlpt_",   # ✅ 슬래시 제거
-    password=st.secrets["COOKIE_PASSWORD"],  # ✅ 가능하면 secrets에 고정
+    prefix="hatena_jlpt/",
+    password=st.secrets.get("COOKIE_PASSWORD", "change-me-please"),
 )
 if not cookies.ready():
     st.info("쿠키를 초기화하는 중입니다… 잠시 후 자동으로 다시 시도됩니다.")
     st.stop()
-
-st.caption(f"cookie refresh_token exists? {bool(cookies.get('refresh_token'))}")  
 
 # ============================================================
 # ✅ Supabase 연결
@@ -198,11 +196,9 @@ def run_db(callable_fn):
             st.rerun()
         raise
 
-def to_kst_naive(x):
-    ts = pd.to_datetime(x, utc=True, errors="coerce")
-    if hasattr(ts, "dt"):
-        return ts.dt.tz_convert(KST_TZ).dt.tz_localize(None)
-    return ts.tz_convert(KST_TZ).tz_localize(None) if ts is not pd.NaT else ts
+def to_kst_naive(series_or_value):
+    ts = pd.to_datetime(series_or_value, utc=True, errors="coerce")
+    return ts.dt.tz_convert(KST_TZ).dt.tz_localize(None)
 
 # ============================================================
 # ✅ DB 함수
@@ -538,11 +534,10 @@ def render_naver_talk():
 # ============================================================
 # ✅ 앱 시작: refresh → 로그인 강제 → profile upsert → 출석 체크
 # ============================================================
-ok = refresh_session_from_cookie_if_needed(force=False)
+refresh_session_from_cookie_if_needed(force=False)
 
-if not ok and cookies.get("refresh_token"):
-    clear_auth_everywhere()
-    st.caption("세션 복원에 실패해서 로그인을 다시 요청합니다.")
+if "user" not in st.session_state:
+    st.session_state.user = None
 
 require_login()
 
